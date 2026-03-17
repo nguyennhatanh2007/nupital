@@ -1,0 +1,400 @@
+.pageShell {
+  min-height: 100vh;
+  padding: 28px 18px 80px;
+  background: radial-gradient(circle at 10% 0%, #fff6f5 0, #fff 45%), #fff;
+}
+
+.headerRow {
+  max-width: 1040px;
+  margin: 0 auto 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.05;
+  color: #2d2d35;
+  font-family: "Montez", cursive;
+}
+
+.pageSubtitle {
+  margin: 8px 0 0;
+  color: #666;
+  font-size: 15px;
+}
+
+.previewLink {
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid #f3c9c6;
+  background: #fff;
+  color: #cc6f72;
+  padding: 8px 14px;
+  font-weight: 600;
+}
+
+.previewLink:hover {
+  text-decoration: none;
+  color: #a55458;
+}
+
+.formLayout {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #f0e7e7;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 30px rgba(224, 161, 161, 0.08);
+}
+
+.cardTitle {
+  margin: 0 0 12px;
+  font-family: "Open Sans", Arial, sans-serif;
+  font-weight: 700;
+  color: #3b3741;
+  font-size: 18px;
+}
+
+.cardHeaderActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  color: #5d5a63;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.gridTwo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gridDateLocation {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.gridMilestoneTop {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+}
+
+.helper {
+  margin: 0 0 8px;
+  color: #7f7a84;
+  font-size: 13px;
+}
+
+.galleryTextarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+}
+
+.inlineActions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.gallerySlotGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.gallerySlotCard {
+  border: 1px solid #eadfdf;
+  border-radius: 12px;
+  background: #fffafa;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 240px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.gallerySlotHeader {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7d6161;
+  text-transform: uppercase;
+}
+
+.galleryPreviewFrame {
+  border-radius: 10px;
+  border: 1px dashed #dfcaca;
+  min-height: 126px;
+  height: 126px;
+  flex: 0 0 auto;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.galleryPreviewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.galleryEmpty {
+  font-size: 12px;
+  color: #9f8b8b;
+}
+
+.imageFieldRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: auto;
+  width: 100%;
+}
+
+.imageFieldRow :global(.form-control) {
+  min-width: 0;
+  height: 38px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uploadButton,
+.secondaryButton,
+.removeButton,
+.primaryButton {
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 9px 12px;
+  line-height: 1;
+}
+
+.uploadButton,
+.secondaryButton {
+  background: #f7efef;
+  color: #6b4a4a;
+}
+
+.uploadButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.uploadButton input[type="file"] {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  pointer-events: none !important;
+}
+
+.uploadButton:hover,
+.secondaryButton:hover {
+  background: #f1e2e2;
+}
+
+.milestoneList {
+  display: grid;
+  gap: 12px;
+}
+
+.milestoneCard {
+  border-radius: 12px;
+  border: 1px solid #eadfdf;
+  background: #fffafa;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.milestoneHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.milestoneBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f6e3e3;
+  color: #8a585a;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.removeButton {
+  background: #fce8e8;
+  color: #a24b4b;
+}
+
+.removeButton:hover {
+  background: #f8d8d8;
+}
+
+.actionBar {
+  position: sticky;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #f0e4e4;
+  border-radius: 14px;
+  padding: 10px 12px;
+  backdrop-filter: blur(8px);
+}
+
+.uploadHint {
+  color: #726b77;
+  font-size: 13px;
+}
+
+.primaryButton {
+  background: #f69d9d;
+  color: #fff;
+  min-width: 138px;
+}
+
+.primaryButton:hover {
+  background: #ef8787;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+}
+
+.toast {
+  max-width: 1040px;
+  margin: 0 auto 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.toastSuccess {
+  background: #e6f6e8;
+  color: #1d6b39;
+  border: 1px solid #bde9c4;
+}
+
+.toastError {
+  background: #fdecec;
+  color: #9a2f2f;
+  border: 1px solid #f6bdbd;
+}
+
+.errorList {
+  max-width: 1040px;
+  margin: 0 auto 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff6e8;
+  border: 1px solid #f0deb2;
+  color: #8b5d14;
+}
+
+.errorList ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.emptyStateCard {
+  max-width: 640px;
+  margin: 50px auto;
+  background: #fff;
+  border: 1px solid #f0e7e7;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(224, 161, 161, 0.08);
+  padding: 24px;
+}
+
+@media (max-width: 900px) {
+  .pageTitle {
+    font-size: 34px;
+  }
+
+  .gridTwo,
+  .gridDateLocation,
+  .gridMilestoneTop {
+    grid-template-columns: 1fr;
+  }
+
+  .gallerySlotGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .pageShell {
+    padding: 20px 12px 76px;
+  }
+
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .gallerySlotGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryButton {
+    width: 100%;
+  }
+}

@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Wedding {
+  id          Int      @id @default(autoincrement())
+  brideName   String
+  groomName   String
+  groomBio    String   @default("")
+  brideBio    String   @default("")
+  weddingDate DateTime
+  location    String
+  heroImage   String   @default("/images/cover_bg_1.jpg")
+  groomImage  String
+  brideImage  String
+
+  // Array of image URLs/paths for the gallery section.
+  gallery     Json
+
+  loveStory   LoveStoryEvent[]
+  weddingEvents WeddingEvent[]
+  bankQrInfo  BankQrInfo?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LoveStoryEvent {
+  id          Int      @id @default(autoincrement())
+  weddingId   Int
+  title       String
+  eventDate   DateTime
+  description String
+  image       String
+  order       Int      @default(0)
+
+  wedding     Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  @@index([weddingId, order])
+}
+
+
+model WeddingEvent {
+  id           Int      @id @default(autoincrement())
+  weddingId    Int
+  type         String
+  title        String
+  dateTime     DateTime
+  lunarDate    String   @default("")
+  locationName String
+  locationUrl  String   @default("")
+
+  wedding Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+}
+
+model BankQrInfo {
+  id            Int     @id @default(autoincrement())
+  weddingId     Int     @unique
+  bankName      String
+  accountNumber String
+  ownerName     String
+  qrImage       String?
+
+  wedding       Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+}
