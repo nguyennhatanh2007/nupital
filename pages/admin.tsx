@@ -100,14 +100,32 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
         groomImage: wedding.groomImage,
         brideImage: wedding.brideImage,
         gallery: normalizeGallerySlots(gallery),
-        loveStory: wedding.loveStory.map((item) => ({
-          id: item.id,
-          title: item.title,
-          eventDate: item.eventDate.toISOString().slice(0, 10),
-          description: item.description,
-          image: item.image,
-          order: item.order,
-        })),
+        loveStory: (() => {
+          const items = wedding.loveStory
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((item) => ({
+              id: item.id,
+              title: item.title,
+              eventDate: item.eventDate.toISOString().slice(0, 10),
+              description: item.description,
+              image: item.image,
+              order: item.order,
+            }));
+
+          while (items.length < 4) {
+            items.push({
+              id: -1,
+              title: "",
+              eventDate: wedding.weddingDate.toISOString().slice(0, 10),
+              description: "",
+              image: "",
+              order: items.length + 1,
+            });
+          }
+
+          return items;
+        })(),
         weddingEvents: wedding.weddingEvents.length > 0
           ? wedding.weddingEvents.map((ev) => ({
               type: ev.type,

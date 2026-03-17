@@ -316,24 +316,25 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                 {data.storyMilestones.map((milestone, index) => {
                   const milestoneDate = new Date(milestone.date);
                   const statusClass = milestoneDate.getTime() < Date.now() ? "completed" : "upcoming";
+                  const isEven = index % 2 === 0;
 
                   return (
                     <div
                       key={`${milestone.title}-${index}`}
-                      className={`timeline-item ${index % 2 === 0 ? "left" : "right"} ${
-                        visibleMilestones.has(index) ? "visible" : ""
-                      }`}
+                      className={`timeline-item ${visibleMilestones.has(index) ? "visible" : ""} ${!isEven ? "right" : ""}`}
                       data-timeline-index={index}
                     >
                       <div className={`timeline-marker ${statusClass}`} />
-                      <div className="timeline-content">
-                        <div className="timeline-header">
-                          <h3 className="timeline-title">{milestone.title}</h3>
-                          <time className="timeline-date">{milestone.date}</time>
-                        </div>
+
+                      <div className={`timeline-block timeline-block-left`}>
                         {milestone.image ? (
                           <img src={milestone.image} alt={milestone.title} className="timeline-image" />
                         ) : null}
+                      </div>
+
+                      <div className={`timeline-block timeline-block-right`}>
+                        <time className="timeline-date">{milestone.date}</time>
+                        <h3 className="timeline-title">{milestone.title}</h3>
                         <p className="timeline-desc">{milestone.description}</p>
                       </div>
                     </div>

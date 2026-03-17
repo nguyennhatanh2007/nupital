@@ -53,6 +53,13 @@ async function main() {
             image: "/images/gallery-3.jpg",
             order: 3,
           },
+          {
+            title: "The Big Day",
+            eventDate: new Date("2027-12-28T00:00:00.000Z"),
+            description: "Surrounded by family and friends, we said \"I do\" under the sun.",
+            image: "/images/gallery-4.jpg",
+            order: 4,
+          },
         ],
       },
       bankQrInfo: {
