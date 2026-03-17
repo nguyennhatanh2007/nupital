@@ -91,25 +91,52 @@ type WeddingTemplateProps = {
 };
 
 export default function WeddingTemplate({ data }: WeddingTemplateProps) {
+  const [visibleMilestones, setVisibleMilestones] = useState<Set<number>>(new Set());
+  const visibleRef = React.useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleIndexes = visibleRef.current;
+        let updated = false;
+        entries.forEach((entry) => {
+          const index = Number(entry.target.getAttribute("data-timeline-index"));
+          if (Number.isFinite(index) && entry.isIntersecting && !visibleIndexes.has(index)) {
+            visibleIndexes.add(index);
+            updated = true;
+          }
+        });
+        if (updated) {
+          // clone to trigger render
+          setVisibleMilestones(new Set(visibleIndexes));
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    const items = document.querySelectorAll<HTMLElement>(".timeline-item");
+    items.forEach((item) => observer.observe(item));
+
+    return () => {
+      items.forEach((item) => observer.unobserve(item));
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <div id="fh5co-wrapper">
       <div id="fh5co-page" className="luxe-page">
-        <header className="luxe-topbar">
-          <div className="container luxe-topbar-inner">
-
-            <nav className="luxe-nav" aria-label="Homepage sections">
+        <main>
+          <section
+            id="home"
+            className="luxe-hero"
+            style={{ backgroundImage: `linear-gradient(135deg, rgba(33, 30, 29, 0.56), rgba(33, 30, 29, 0.2)), url(${data.heroImage})` }}
+          >
+            <nav className="luxe-nav-float" aria-label="Homepage sections">
               <a href="#couple">Couple</a>
               <a href="#gallery">Gallery</a>
               <a href="#messages">Friend Messages</a>
             </nav>
-          </div>
-        </header>
-
-        <section
-          id="home"
-          className="luxe-hero"
-          style={{ backgroundImage: `linear-gradient(135deg, rgba(33, 30, 29, 0.56), rgba(33, 30, 29, 0.2)), url(${data.heroImage})` }}
-        >
           <div className="container luxe-hero-grid">
             <div className="luxe-hero-content">
               <div className="luxe-hero-copy animate-box">
@@ -277,7 +304,45 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
           </section>
         )}
 
-        {/* Story section removed as requested */}
+        {data.storyMilestones.length > 0 && (
+          <section id="timeline" className="luxe-section luxe-section-cream">
+            <div className="container">
+              <div className="luxe-section-heading text-center animate-box">
+                <span className="luxe-kicker">Our Story</span>
+                <h2>Love Story Timeline</h2>
+                <p>Moments that shaped our journey together.</p>
+              </div>
+              <div className="timeline">
+                {data.storyMilestones.map((milestone, index) => {
+                  const milestoneDate = new Date(milestone.date);
+                  const statusClass = milestoneDate.getTime() < Date.now() ? "completed" : "upcoming";
+
+                  return (
+                    <div
+                      key={`${milestone.title}-${index}`}
+                      className={`timeline-item ${index % 2 === 0 ? "left" : "right"} ${
+                        visibleMilestones.has(index) ? "visible" : ""
+                      }`}
+                      data-timeline-index={index}
+                    >
+                      <div className={`timeline-marker ${statusClass}`} />
+                      <div className="timeline-content">
+                        <div className="timeline-header">
+                          <h3 className="timeline-title">{milestone.title}</h3>
+                          <time className="timeline-date">{milestone.date}</time>
+                        </div>
+                        {milestone.image ? (
+                          <img src={milestone.image} alt={milestone.title} className="timeline-image" />
+                        ) : null}
+                        <p className="timeline-desc">{milestone.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
 
         <section id="gallery" className="luxe-section luxe-section-cream">
           <div className="container">
@@ -313,6 +378,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
             </div>
           </div>
         </section>
+      </main>
 
         <footer className="luxe-footer">
           <div className="container text-center">
