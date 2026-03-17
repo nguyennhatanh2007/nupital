@@ -25,6 +25,7 @@ model Wedding {
   loveStory   LoveStoryEvent[]
   weddingEvents WeddingEvent[]
   bankQrInfo  BankQrInfo?
+  friendMessages FriendMessage[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -67,4 +68,16 @@ model BankQrInfo {
   qrImage       String?
 
   wedding       Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+}
+
+model FriendMessage {
+  id        Int      @id @default(autoincrement())
+  weddingId Int?
+  name      String
+  message   String
+  createdAt DateTime @default(now())
+
+  /// optional relation if you want to attach messages to a Wedding
+  wedding   Wedding? @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  @@index([weddingId, createdAt])
 }

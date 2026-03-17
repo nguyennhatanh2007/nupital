@@ -10,10 +10,11 @@ export interface WeddingData {
   heroImage: string;
   groomImage: string;
   brideImage: string;
-  storyMilestones: Array<{
+    storyMilestones: Array<{
     title: string;
     date: string;
     description: string;
+    image?: string;
   }>;
   galleryImages: string[];
   weddingEvents: Array<{
@@ -50,9 +51,10 @@ export function mapWeddingToWeddingData(wedding: WeddingWithStory): WeddingData 
       .slice()
       .sort((a, b) => a.order - b.order)
       .map((item) => ({
-        title: item.title,
-        date: item.eventDate.toISOString().split("T")[0],
-        description: item.description,
+          title: item.title,
+          date: item.eventDate.toISOString().split("T")[0],
+          description: item.description,
+          image: (item as any).image || undefined,
       })),
     galleryImages,
     weddingEvents: wedding.weddingEvents.map((e) => {
@@ -154,7 +156,7 @@ function getLeapMonthOffset(a11: number, timeZone: number) {
   return i - 1;
 }
 
-function convertSolar2Lunar(dd: number, mm: number, yy: number, timeZone: number) {
+export function convertSolar2Lunar(dd: number, mm: number, yy: number, timeZone: number) {
   const dayNumber = jdFromDate(dd, mm, yy);
   const k = INT((dayNumber - 2415021.076998695) / 29.530588853);
   let monthStart = getNewMoonDay(k + 1, timeZone);
@@ -185,7 +187,7 @@ function convertSolar2Lunar(dd: number, mm: number, yy: number, timeZone: number
   return [lunarDay, lunarMonth, lunarYear];
 }
 
-function getYearName(year: number) {
+export function getYearName(year: number) {
   const CAN = ["Canh","Tân","Nhâm","Quý","Giáp","Ất","Bính","Đinh","Mậu","Kỷ"];
   const CHI = ["Thân","Dậu","Tuất","Hợi","Tý","Sửu","Dần","Mão","Thìn","Tỵ","Ngọ","Mùi"];
   return `${CAN[(year + 6) % 10]} ${CHI[(year + 8) % 12]}`;

@@ -6,8 +6,8 @@ import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "./ui/button";
+import { Calendar } from "./ui/calendar";
 import {
   Form,
   FormControl,
@@ -16,22 +16,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+} from "./ui/form";
+import { Input } from "./ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Textarea } from "./ui/textarea";
+import { cn } from "../lib/utils";
 
 const loveStoryMilestoneSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters."),
-  date: z.date({ required_error: "Milestone date is required." }),
+  date: z.date({} as any),
   description: z.string().min(5, "Description must be at least 5 characters."),
 });
 
 export const weddingInfoSchema = z.object({
   brideName: z.string().min(2, "Bride name must be at least 2 characters."),
   groomName: z.string().min(2, "Groom name must be at least 2 characters."),
-  weddingDate: z.date({ required_error: "Wedding date is required." }),
+  weddingDate: z.date({} as any),
   loveStory: z
     .array(loveStoryMilestoneSchema)
     .min(1, "Add at least one love story milestone."),
@@ -78,7 +78,7 @@ export function WeddingInfoForm({ defaultValues, onSubmit }: WeddingInfoFormProp
           <FormField
             control={form.control}
             name="brideName"
-            render={({ field }) => (
+            render={({ field }: any) => (
               <FormItem>
                 <FormLabel>Bride Name</FormLabel>
                 <FormControl>
@@ -92,7 +92,7 @@ export function WeddingInfoForm({ defaultValues, onSubmit }: WeddingInfoFormProp
           <FormField
             control={form.control}
             name="groomName"
-            render={({ field }) => (
+            render={({ field }: any) => (
               <FormItem>
                 <FormLabel>Groom Name</FormLabel>
                 <FormControl>
@@ -107,7 +107,7 @@ export function WeddingInfoForm({ defaultValues, onSubmit }: WeddingInfoFormProp
         <FormField
           control={form.control}
           name="weddingDate"
-          render={({ field }) => (
+          render={({ field }: any) => (
             <FormItem className="flex flex-col">
               <FormLabel>Wedding Day</FormLabel>
               <Popover>
@@ -162,7 +162,7 @@ export function WeddingInfoForm({ defaultValues, onSubmit }: WeddingInfoFormProp
                 <FormField
                   control={form.control}
                   name={`loveStory.${index}.title`}
-                  render={({ field }) => (
+                  render={({ field }: any) => (
                     <FormItem>
                       <FormLabel>Title</FormLabel>
                       <FormControl>
@@ -176,7 +176,7 @@ export function WeddingInfoForm({ defaultValues, onSubmit }: WeddingInfoFormProp
                 <FormField
                   control={form.control}
                   name={`loveStory.${index}.date`}
-                  render={({ field }) => (
+                  render={({ field }: any) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Date</FormLabel>
                       <Popover>
@@ -213,7 +213,7 @@ export function WeddingInfoForm({ defaultValues, onSubmit }: WeddingInfoFormProp
               <FormField
                 control={form.control}
                 name={`loveStory.${index}.description`}
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>

@@ -1,5 +1,90 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { WeddingData } from "../lib/wedding-data";
+import { convertSolar2Lunar, getYearName } from "../lib/wedding-data";
+
+function MessageForm() {
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!name.trim() || !message.trim()) {
+      setError("Vui lòng nhập tên và lời chúc.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), message: message.trim() }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error || "Request failed");
+      setName("");
+      setMessage("");
+      // notify message lists to reload
+      window.dispatchEvent(new Event("messages:updated"));
+    } catch (e: any) {
+      setError(e?.message || "Có lỗi");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="luxe-rsvp-form" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="form-control" />
+      <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Your message" rows={4} className="form-control" />
+      {error && <div style={{ color: "#f66" }}>{error}</div>}
+      <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+        {loading ? "Sending…" : "Send Wish"}
+      </button>
+    </form>
+  );
+}
+
+function MessageList() {
+  const [messages, setMessages] = useState<Array<{ id: number; name: string; message: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/messages");
+      const body = await res.json();
+      if (res.ok && body.ok) setMessages(body.messages);
+    } catch (e) {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    const h = () => load();
+    window.addEventListener("messages:updated", h);
+    return () => window.removeEventListener("messages:updated", h);
+  }, []);
+
+  if (loading) return <div>Loading messages…</div>;
+  if (!messages.length) return <div>No messages yet — be the first!</div>;
+
+  return (
+    <div className="friend-messages-row">
+      {messages.map((m) => (
+        <div key={m.id} className="friend-message-card">
+          <div className="friend-message-name">{m.name}</div>
+          <div className="friend-message-text">{m.message}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 type WeddingTemplateProps = {
   data: WeddingData;
@@ -14,9 +99,8 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
 
             <nav className="luxe-nav" aria-label="Homepage sections">
               <a href="#couple">Couple</a>
-              <a href="#story">Story</a>
               <a href="#gallery">Gallery</a>
-              <a href="#rsvp">RSVP</a>
+              <a href="#messages">Friend Messages</a>
             </nav>
           </div>
         </header>
@@ -40,10 +124,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                     <strong>Date</strong>
                     <span>{data.weddingDate}</span>
                   </div>
-                  <div className="luxe-meta-pill">
-                    <strong>Location</strong>
-                    <span>{data.location}</span>
-                  </div>
+                  {/* Location pill removed from hero as requested */}
                 </div>
               </div>
 
@@ -99,7 +180,18 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                   const timeSentence = `ĐƯỢC TỔ CHỨC VÀO LÚC ${Number(hours)} GIỜ ${minutes} PHÚT`;
                   const mapUrl = primary && primary.locationUrl ? primary.locationUrl : data.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.location)}` : undefined;
                   const addressText = primary?.locationName || data.location || '';
-                  const lunarText = primary?.lunarDate || '';
+                  const lunarText = primary?.lunarDate || (() => {
+                    try {
+                      const dd = sourceDate.getDate();
+                      const mm = sourceDate.getMonth() + 1;
+                      const yy = sourceDate.getFullYear();
+                      const tz = 7; // Vietnam
+                      const [lday, lmonth, lyear] = convertSolar2Lunar(dd, mm, yy, tz);
+                      return `Ngày ${lday} tháng ${lmonth} năm ${getYearName(lyear)}`;
+                    } catch (e) {
+                      return '';
+                    }
+                  })();
 
                   return (
                     <>
@@ -117,9 +209,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                         <div className="col-day-center">
                           <div className="weekday-label">{weekday}</div>
                           <div className="col-day-big">{day}</div>
-                          {lunarText ? (
-                            <div className="lunar-note">Tức {lunarText}</div>
-                          ) : null}
+                          {/** removed inline lunar note here; it will be shown above the address block */}
                         </div>
 
                         <div className="col-year">
@@ -127,6 +217,10 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                           <div className="col-value">{year}</div>
                         </div>
                       </div>
+
+                      {lunarText ? (
+                        <p className="luxe-event-lunar">(tức {lunarText.replace('(Âm lịch)', '').trim()})</p>
+                      ) : null}
 
                       {addressText && mapUrl && (
                         <p className="luxe-event-address">
@@ -183,26 +277,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
           </section>
         )}
 
-        <section id="story" className="luxe-section luxe-section-white">
-          <div className="container">
-            <div className="luxe-section-heading text-center animate-box">
-              <span className="luxe-kicker">Love Story</span>
-              <h2>Moments That Led Us Here</h2>
-              <p>A cleaner, editorial timeline to tell the relationship story with more breathing room.</p>
-            </div>
-
-            <div className="luxe-story-grid">
-              {data.storyMilestones.map((milestone, index) => (
-                <article className="luxe-story-card animate-box" key={`${milestone.title}-${index}`}>
-                  <span className="luxe-story-index">0{index + 1}</span>
-                  <span className="luxe-story-date">{milestone.date}</span>
-                  <h3>{milestone.title}</h3>
-                  <p>{milestone.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Story section removed as requested */}
 
         <section id="gallery" className="luxe-section luxe-section-cream">
           <div className="container">
@@ -222,20 +297,19 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
           </div>
         </section>
 
-        <section id="rsvp" className="luxe-section luxe-rsvp-band">
+        <section id="messages" className="luxe-section luxe-rsvp-band">
           <div className="container">
-            <div className="luxe-rsvp-card animate-box">
-              <span className="luxe-kicker">RSVP</span>
-              <h2>Celebrate This Day With Us</h2>
-              <p>Please let us know if you will be joining our wedding celebration.</p>
+              <div className="luxe-rsvp-card animate-box">
+              <span className="luxe-kicker">Friend Message</span>
+              <h2>Send Your Wishes</h2>
+              <p>Leave a short message for the couple — your words will appear below.</p>
 
-              <form className="luxe-rsvp-form">
-                <input type="text" className="form-control" id="name" placeholder="Your name" />
-                <input type="email" className="form-control" id="email" placeholder="Your email" />
-                <button type="submit" className="btn btn-primary btn-block">
-                  Confirm Attendance
-                </button>
-              </form>
+              <div style={{ marginBottom: 18 }}>
+                <h3 style={{ marginBottom: 12 }}>Messages</h3>
+                <MessageList />
+              </div>
+
+              <MessageForm />
             </div>
           </div>
         </section>
