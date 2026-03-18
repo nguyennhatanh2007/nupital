@@ -2478,24 +2478,51 @@ figure {
   }
 
   .timeline::before {
-    left: 16px;
+    left: 18px;
     transform: none;
   }
 
   .timeline-item {
     flex-direction: column;
-    padding: 18px 0;
+    padding: 16px 16px 16px 52px;
     transform: translateX(0);
+    gap: 8px;
+    margin-bottom: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(242, 225, 221, 0.7);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .timeline-item.right {
+    flex-direction: column;
   }
 
   .timeline-block {
     width: 100%;
-    margin-bottom: 18px;
+    margin-bottom: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .timeline-block-left,
+  .timeline-block-right,
+  .timeline-item.right .timeline-block-left,
+  .timeline-item.right .timeline-block-right {
+    text-align: left;
   }
 
   .timeline-marker {
-    left: 10px;
-    top: 26px;
-    transform: none;
+    left: 18px;
+    top: 22px;
+    transform: translateX(-50%);
+  }
+
+  .timeline-image {
+    max-height: 220px;
+    margin: 0;
   }
 }
