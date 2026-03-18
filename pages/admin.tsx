@@ -40,6 +40,14 @@ type AdminWedding = {
   heroImage: string;
   groomImage: string;
   brideImage: string;
+  bankQrGroomBankName: string;
+  bankQrGroomAccountNumber: string;
+  bankQrGroomOwnerName: string;
+  bankQrGroomImage: string;
+  bankQrBrideBankName: string;
+  bankQrBrideAccountNumber: string;
+  bankQrBrideOwnerName: string;
+  bankQrBrideImage: string;
   gallery: string[];
   loveStory: AdminMilestone[];
   weddingEvents: AdminWeddingEvent[];
@@ -68,6 +76,7 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
           order: "asc",
         },
       },
+      bankQrInfo: true,
       weddingEvents: true,
     },
     orderBy: {
@@ -100,6 +109,14 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
         heroImage: wedding.heroImage,
         groomImage: wedding.groomImage,
         brideImage: wedding.brideImage,
+        bankQrGroomBankName: wedding.bankQrInfo?.groomBankName || wedding.bankQrInfo?.bankName || "",
+        bankQrGroomAccountNumber: wedding.bankQrInfo?.groomAccountNumber || wedding.bankQrInfo?.accountNumber || "",
+        bankQrGroomOwnerName: wedding.bankQrInfo?.groomOwnerName || wedding.groomName,
+        bankQrGroomImage: wedding.bankQrInfo?.groomQrImage || wedding.bankQrInfo?.qrImage || "",
+        bankQrBrideBankName: wedding.bankQrInfo?.brideBankName || wedding.bankQrInfo?.bankName || "",
+        bankQrBrideAccountNumber: wedding.bankQrInfo?.brideAccountNumber || wedding.bankQrInfo?.accountNumber || "",
+        bankQrBrideOwnerName: wedding.bankQrInfo?.brideOwnerName || wedding.brideName,
+        bankQrBrideImage: wedding.bankQrInfo?.brideQrImage || wedding.bankQrInfo?.qrImage || "",
         gallery: normalizeGallerySlots(gallery),
         loveStory: (() => {
           const items = wedding.loveStory
@@ -204,6 +221,10 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
       next[index] = { ...next[index], [key]: value };
       return { ...prev, weddingEvents: next };
     });
+  };
+
+  const updateBankQrField = <K extends "bankQrGroomBankName" | "bankQrGroomAccountNumber" | "bankQrGroomOwnerName" | "bankQrGroomImage" | "bankQrBrideBankName" | "bankQrBrideAccountNumber" | "bankQrBrideOwnerName" | "bankQrBrideImage">(key: K, value: string) => {
+    setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
   const removeMilestone = (index: number) => {
@@ -339,6 +360,16 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
           gallery: normalizedGallery.map((item) => item.trim()).filter(Boolean),
           loveStory: form.loveStory.map((item, index) => ({ ...item, order: index + 1 })),
           weddingEvents: form.weddingEvents,
+          bankQrInfo: {
+            groomBankName: form.bankQrGroomBankName,
+            groomAccountNumber: form.bankQrGroomAccountNumber,
+            groomOwnerName: form.bankQrGroomOwnerName,
+            groomQrImage: form.bankQrGroomImage,
+            brideBankName: form.bankQrBrideBankName,
+            brideAccountNumber: form.bankQrBrideAccountNumber,
+            brideOwnerName: form.bankQrBrideOwnerName,
+            brideQrImage: form.bankQrBrideImage,
+          },
         }),
       });
 
@@ -593,6 +624,107 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                 + Add Gallery Slot ({form.gallery.length}/{MAX_GALLERY_SIZE})
               </button>
             )}
+          </section>
+
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>Mừng Cưới / QR</h2>
+            <p className={styles.helper}>Mỗi bên có thông tin riêng: Ngân hàng, STK, Chủ tài khoản và 1 QR vuông.</p>
+
+            <div className={styles.gridTwo}>
+              <div className={styles.field}>
+                <label>Nhà Trai - Ngân Hàng</label>
+                <input
+                  className="form-control"
+                  value={form.bankQrGroomBankName}
+                  onChange={(e) => updateBankQrField("bankQrGroomBankName", e.target.value)}
+                  placeholder="ACB"
+                />
+              </div>
+              <div className={styles.field}>
+                <label>Nhà Trai - Số Tài Khoản</label>
+                <input
+                  className="form-control"
+                  value={form.bankQrGroomAccountNumber}
+                  onChange={(e) => updateBankQrField("bankQrGroomAccountNumber", e.target.value)}
+                  placeholder="0911222333"
+                />
+              </div>
+            </div>
+
+            <div className={styles.gridTwo}>
+              <div className={styles.field}>
+                <label>Nhà Trai - Chủ Tài Khoản</label>
+                <input
+                  className="form-control"
+                  value={form.bankQrGroomOwnerName}
+                  onChange={(e) => updateBankQrField("bankQrGroomOwnerName", e.target.value)}
+                  placeholder="Tên chú rể"
+                />
+              </div>
+              <div className={styles.field}>
+                <label>QR Nhà Trai</label>
+                <div className={styles.imageFieldRow}>
+                  <input className="form-control" value={form.bankQrGroomImage} readOnly />
+                  <label className={styles.uploadButton}>
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => handleUpload("bankQrGroomImage", (path) => updateBankQrField("bankQrGroomImage", path), e.target.files?.[0])}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.gridTwo}>
+              <div className={styles.field}>
+                <label>Nhà Gái - Ngân Hàng</label>
+                <input
+                  className="form-control"
+                  value={form.bankQrBrideBankName}
+                  onChange={(e) => updateBankQrField("bankQrBrideBankName", e.target.value)}
+                  placeholder="VCB"
+                />
+              </div>
+              <div className={styles.field}>
+                <label>Nhà Gái - Số Tài Khoản</label>
+                <input
+                  className="form-control"
+                  value={form.bankQrBrideAccountNumber}
+                  onChange={(e) => updateBankQrField("bankQrBrideAccountNumber", e.target.value)}
+                  placeholder="123456789"
+                />
+              </div>
+            </div>
+
+            <div className={styles.gridTwo}>
+              <div className={styles.field}>
+                <label>Nhà Gái - Chủ Tài Khoản</label>
+                <input
+                  className="form-control"
+                  value={form.bankQrBrideOwnerName}
+                  onChange={(e) => updateBankQrField("bankQrBrideOwnerName", e.target.value)}
+                  placeholder="Tên cô dâu"
+                />
+              </div>
+              <div className={styles.field}>
+                <label>QR Nhà Gái</label>
+                <div className={styles.imageFieldRow}>
+                  <input className="form-control" value={form.bankQrBrideImage} readOnly />
+                  <label className={styles.uploadButton}>
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => handleUpload("bankQrBrideImage", (path) => updateBankQrField("bankQrBrideImage", path), e.target.files?.[0])}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section className={styles.card}>

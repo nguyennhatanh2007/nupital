@@ -1,4 +1,4 @@
-import type { LoveStoryEvent, Wedding, WeddingEvent } from "@prisma/client";
+import type { BankQrInfo, LoveStoryEvent, Wedding, WeddingEvent } from "@prisma/client";
 
 export interface WeddingData {
   groomName: string;
@@ -10,13 +10,27 @@ export interface WeddingData {
   heroImage: string;
   groomImage: string;
   brideImage: string;
-    storyMilestones: Array<{
+  storyMilestones: Array<{
     title: string;
     date: string;
     description: string;
     image?: string;
   }>;
   galleryImages: string[];
+  bankQrInfo?: {
+    bankName: string;
+    accountNumber: string;
+    ownerName: string;
+    qrImage?: string | null;
+    groomBankName?: string | null;
+    groomAccountNumber?: string | null;
+    groomOwnerName?: string | null;
+    groomQrImage?: string | null;
+    brideBankName?: string | null;
+    brideAccountNumber?: string | null;
+    brideOwnerName?: string | null;
+    brideQrImage?: string | null;
+  };
   weddingEvents: Array<{
     type: string;
     title: string;
@@ -30,6 +44,7 @@ export interface WeddingData {
 type WeddingWithStory = Wedding & {
   loveStory: LoveStoryEvent[];
   weddingEvents: WeddingEvent[];
+  bankQrInfo: BankQrInfo | null;
 };
 
 export function mapWeddingToWeddingData(wedding: WeddingWithStory): WeddingData {
@@ -57,6 +72,22 @@ export function mapWeddingToWeddingData(wedding: WeddingWithStory): WeddingData 
           image: (item as any).image || undefined,
       })),
     galleryImages,
+    bankQrInfo: wedding.bankQrInfo
+      ? {
+          bankName: wedding.bankQrInfo.bankName,
+          accountNumber: wedding.bankQrInfo.accountNumber,
+          ownerName: wedding.bankQrInfo.ownerName,
+          qrImage: wedding.bankQrInfo.qrImage,
+          groomBankName: wedding.bankQrInfo.groomBankName,
+          groomAccountNumber: wedding.bankQrInfo.groomAccountNumber,
+          groomOwnerName: wedding.bankQrInfo.groomOwnerName,
+          groomQrImage: wedding.bankQrInfo.groomQrImage,
+          brideBankName: wedding.bankQrInfo.brideBankName,
+          brideAccountNumber: wedding.bankQrInfo.brideAccountNumber,
+          brideOwnerName: wedding.bankQrInfo.brideOwnerName,
+          brideQrImage: wedding.bankQrInfo.brideQrImage,
+        }
+      : undefined,
     weddingEvents: wedding.weddingEvents.map((e) => {
       // compute lunar date automatically if not provided
       const date = e.dateTime;

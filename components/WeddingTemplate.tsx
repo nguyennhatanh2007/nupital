@@ -87,6 +87,17 @@ function MessageList() {
   );
 }
 
+function FakeQrSquare({ label }: { label: string }) {
+  return (
+    <div className="luxe-qr-fake" role="img" aria-label={`Mã QR giả lập ${label}`}>
+      <span className="luxe-qr-fake-corner top-left" />
+      <span className="luxe-qr-fake-corner top-right" />
+      <span className="luxe-qr-fake-corner bottom-left" />
+      <span className="luxe-qr-fake-dots" />
+    </div>
+  );
+}
+
 type WeddingTemplateProps = {
   data: WeddingData;
 };
@@ -198,13 +209,6 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                 <p className="luxe-hero-text">
                   A refined celebration of love, family, and the quiet beauty of a day made to be remembered.
                 </p>
-                <div className="luxe-meta-row">
-                  <div className="luxe-meta-pill">
-                    <strong>Date</strong>
-                    <span>{data.weddingDate}</span>
-                  </div>
-                  {/* Location pill removed from hero as requested */}
-                </div>
               </div>
 
 
@@ -443,6 +447,80 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
             </div>
           </div>
         </section>
+
+        {data.bankQrInfo && (
+          <section id="qr" className="luxe-section luxe-section-cream luxe-qr-band">
+            <div className="container">
+              <div className="luxe-section-heading text-center animate-box">
+                <span className="luxe-kicker">Mừng Cưới</span>
+                <h2>Một lời chúc nhỏ, một tấm lòng lớn</h2>
+                <p>Thiết kế gọn và tinh tế để bạn lựa chọn gửi lời chúc theo cách riêng.</p>
+              </div>
+
+              <div className="luxe-qr-strip animate-box">
+                {(() => {
+                  const groomBankName = data.bankQrInfo?.groomBankName || data.bankQrInfo?.bankName || "";
+                  const groomAccountNumber = data.bankQrInfo?.groomAccountNumber || data.bankQrInfo?.accountNumber || "";
+                  const groomOwnerName = data.bankQrInfo?.groomOwnerName || data.groomName;
+                  const brideBankName = data.bankQrInfo?.brideBankName || data.bankQrInfo?.bankName || "";
+                  const brideAccountNumber = data.bankQrInfo?.brideAccountNumber || data.bankQrInfo?.accountNumber || "";
+                  const brideOwnerName = data.bankQrInfo?.brideOwnerName || data.brideName;
+
+                  return (
+                    <>
+                <div className="luxe-qr-side luxe-qr-side-left">
+                  <span>Nhà Trai</span>
+                  <strong>{groomOwnerName}</strong>
+                  <p className="luxe-qr-side-line">{groomBankName}</p>
+                  <p className="luxe-qr-side-line">STK {groomAccountNumber}</p>
+                </div>
+
+                <div className="luxe-qr-frame luxe-qr-frame-compact luxe-qr-frame-groom">
+                  {data.bankQrInfo.groomQrImage || data.bankQrInfo.qrImage ? (
+                    <Image
+                      src={data.bankQrInfo.groomQrImage || data.bankQrInfo.qrImage || ""}
+                      alt="QR chuyển khoản nhà trai"
+                      width={260}
+                      height={260}
+                      unoptimized
+                      quality={90}
+                      sizes="(max-width: 768px) 170px, 220px"
+                    />
+                  ) : (
+                    <FakeQrSquare label="nhà trai" />
+                  )}
+                </div>
+
+                <div className="luxe-qr-frame luxe-qr-frame-compact luxe-qr-frame-bride">
+                  {data.bankQrInfo.brideQrImage || data.bankQrInfo.qrImage ? (
+                    <Image
+                      src={data.bankQrInfo.brideQrImage || data.bankQrInfo.qrImage || ""}
+                      alt="QR chuyển khoản nhà gái"
+                      width={260}
+                      height={260}
+                      unoptimized
+                      quality={90}
+                      sizes="(max-width: 768px) 170px, 220px"
+                    />
+                  ) : (
+                    <FakeQrSquare label="nhà gái" />
+                  )}
+                </div>
+
+                <div className="luxe-qr-side luxe-qr-side-right">
+                  <span>Nhà Gái</span>
+                  <strong>{brideOwnerName}</strong>
+                  <p className="luxe-qr-side-line">{brideBankName}</p>
+                  <p className="luxe-qr-side-line">STK {brideAccountNumber}</p>
+                </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+            </div>
+          </section>
+        )}
       </main>
 
         <footer className="luxe-footer">

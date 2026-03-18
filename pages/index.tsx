@@ -16,6 +16,7 @@ export const getServerSideProps: GetServerSideProps<HomePageProps> = async () =>
           order: "asc",
         },
       },
+      bankQrInfo: true,
       weddingEvents: true,
     },
     orderBy: {

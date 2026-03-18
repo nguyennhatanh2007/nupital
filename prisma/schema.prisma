@@ -66,6 +66,14 @@ model BankQrInfo {
   accountNumber String
   ownerName     String
   qrImage       String?
+  groomBankName String?
+  groomAccountNumber String?
+  groomOwnerName String?
+  groomQrImage  String?
+  brideBankName String?
+  brideAccountNumber String?
+  brideOwnerName String?
+  brideQrImage  String?
 
   wedding       Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
 }

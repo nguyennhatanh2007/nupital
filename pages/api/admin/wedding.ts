@@ -33,6 +33,16 @@ type UpdateWeddingBody = {
   gallery: string[];
   loveStory: LoveStoryInput[];
   weddingEvents?: WeddingEventInput[];
+  bankQrInfo?: {
+    groomBankName?: string;
+    groomAccountNumber?: string;
+    groomOwnerName?: string;
+    groomQrImage?: string;
+    brideBankName?: string;
+    brideAccountNumber?: string;
+    brideOwnerName?: string;
+    brideQrImage?: string;
+  };
 };
 
 function isNonEmptyString(value: unknown): value is string {
@@ -116,6 +126,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           gallery: normalizedGallery,
         },
       });
+
+      if (body.bankQrInfo) {
+          const groomBankName = typeof body.bankQrInfo.groomBankName === "string" ? body.bankQrInfo.groomBankName.trim() : "";
+          const groomAccountNumber = typeof body.bankQrInfo.groomAccountNumber === "string" ? body.bankQrInfo.groomAccountNumber.trim() : "";
+          const groomOwnerName = typeof body.bankQrInfo.groomOwnerName === "string" ? body.bankQrInfo.groomOwnerName.trim() : "";
+          const groomQrImage = typeof body.bankQrInfo.groomQrImage === "string" ? body.bankQrInfo.groomQrImage.trim() : "";
+          const brideBankName = typeof body.bankQrInfo.brideBankName === "string" ? body.bankQrInfo.brideBankName.trim() : "";
+          const brideAccountNumber = typeof body.bankQrInfo.brideAccountNumber === "string" ? body.bankQrInfo.brideAccountNumber.trim() : "";
+          const brideOwnerName = typeof body.bankQrInfo.brideOwnerName === "string" ? body.bankQrInfo.brideOwnerName.trim() : "";
+          const brideQrImage = typeof body.bankQrInfo.brideQrImage === "string" ? body.bankQrInfo.brideQrImage.trim() : "";
+
+          const existing = await tx.bankQrInfo.findUnique({ where: { weddingId: body.id } });
+
+          const mergedBankName = groomBankName || brideBankName || existing?.bankName || "";
+          const mergedAccountNumber = groomAccountNumber || brideAccountNumber || existing?.accountNumber || "";
+          const mergedOwnerName = groomOwnerName || brideOwnerName || existing?.ownerName || "";
+
+          if (groomBankName || groomAccountNumber || groomOwnerName || groomQrImage || brideBankName || brideAccountNumber || brideOwnerName || brideQrImage) {
+            if (existing) {
+              await tx.bankQrInfo.update({
+                where: { weddingId: body.id },
+                data: {
+                  bankName: mergedBankName,
+                  accountNumber: mergedAccountNumber,
+                  ownerName: mergedOwnerName,
+                  qrImage: groomQrImage || brideQrImage || existing.qrImage,
+                  groomBankName,
+                  groomAccountNumber,
+                  groomOwnerName,
+                  groomQrImage,
+                  brideBankName,
+                  brideAccountNumber,
+                  brideOwnerName,
+                  brideQrImage,
+                },
+              });
+            } else {
+              await tx.bankQrInfo.create({
+                data: {
+                  weddingId: body.id,
+                  bankName: mergedBankName,
+                  accountNumber: mergedAccountNumber,
+                  ownerName: mergedOwnerName,
+                  qrImage: groomQrImage || brideQrImage || null,
+                  groomBankName,
+                  groomAccountNumber,
+                  groomOwnerName,
+                  groomQrImage,
+                  brideBankName,
+                  brideAccountNumber,
+                  brideOwnerName,
+                  brideQrImage,
+                },
+              });
+            }
+          }
+      }
 
       await tx.loveStoryEvent.deleteMany({ where: { weddingId: body.id } });
 
