@@ -38,11 +38,11 @@ function MessageForm() {
 
   return (
     <form onSubmit={submit} className="luxe-rsvp-form" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="form-control" />
-      <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Your message" rows={4} className="form-control" />
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên của bạn" className="form-control" />
+      <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Viết vài dòng chúc phúc thật ấm áp..." rows={4} className="form-control" />
       {error && <div style={{ color: "#f66" }}>{error}</div>}
       <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-        {loading ? "Sending…" : "Send Wish"}
+        {loading ? "Đang gửi..." : "Gửi lời chúc"}
       </button>
     </form>
   );
@@ -72,8 +72,8 @@ function MessageList() {
     return () => window.removeEventListener("messages:updated", h);
   }, []);
 
-  if (loading) return <div>Loading messages…</div>;
-  if (!messages.length) return <div>No messages yet — be the first!</div>;
+  if (loading) return <div>Đang tải lời chúc...</div>;
+  if (!messages.length) return <div>Chưa có lời chúc nào, bạn là người đầu tiên viết nhé.</div>;
 
   return (
     <div className="friend-messages-row">
@@ -198,7 +198,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
             <nav className="luxe-nav-float" aria-label="Homepage sections">
               <a href="#couple">Couple</a>
               <a href="#gallery">Gallery</a>
-              <a href="#messages">Friend Messages</a>
+              <a href="#messages">Lời Chúc</a>
             </nav>
           <div className="container luxe-hero-grid">
             <div className="luxe-hero-content">
@@ -434,12 +434,12 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
         <section id="messages" className="luxe-section luxe-rsvp-band">
           <div className="container">
               <div className="luxe-rsvp-card animate-box">
-              <span className="luxe-kicker">Friend Message</span>
-              <h2>Send Your Wishes</h2>
-              <p>Leave a short message for the couple — your words will appear below.</p>
+              <span className="luxe-kicker">Lời Chúc</span>
+              <h2>Gửi Một Lời Chúc Nhỏ</h2>
+              <p>Những lời nhắn thân thương của bạn sẽ được lưu lại như một phần kỷ niệm đẹp trong ngày cưới của chúng mình.</p>
 
               <div style={{ marginBottom: 18 }}>
-                <h3 style={{ marginBottom: 12 }}>Messages</h3>
+                <h3 className="luxe-message-subtitle">Sổ Lưu Bút</h3>
                 <MessageList />
               </div>
 

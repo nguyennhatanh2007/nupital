@@ -2235,9 +2235,9 @@ figure {
 /* Friend messages horizontal cards */
 .friend-messages-row {
   display: flex;
-  gap: 16px;
+  gap: 18px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -2245,28 +2245,18 @@ figure {
 .friend-message-card {
   min-width: 260px;
   max-width: 320px;
-  background: linear-gradient(135deg, #fffaf0 0%, #fff1e0 100%);
-  color: #221f1e;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 8px 18px rgba(31, 24, 20, 0.06);
+  background: linear-gradient(160deg, #fffdfa 0%, #f9f2eb 100%);
+  color: #3a302b;
+  padding: 18px 18px 16px;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(67, 49, 37, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   flex: 0 0 auto;
-  border: 1px solid rgba(31,24,20,0.04);
+  border: 1px solid rgba(173, 144, 116, 0.22);
   position: relative;
-  padding-left: 20px;
-}
-
-.friend-message-card:nth-child(2n) {
-  background: linear-gradient(135deg, #eefaf7 0%, #eaf7ec 100%);
-  color: #221f1e;
-}
-
-.friend-message-card:nth-child(3n) {
-  background: linear-gradient(135deg, #f8f4ff 0%, #f6f0ff 100%);
-  color: #221f1e;
+  padding-left: 22px;
 }
 
 /* Accent bar on left to add visual separation */
@@ -2274,31 +2264,36 @@ figure {
   content: "";
   position: absolute;
   left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 6px;
+  top: 14px;
+  bottom: 14px;
+  width: 5px;
   border-radius: 6px;
-  background: linear-gradient(180deg, rgba(192,90,90,0.95), rgba(192,130,90,0.95));
-}
-
-.friend-message-card:nth-child(2n)::before {
-  background: linear-gradient(180deg, rgba(80,200,190,0.95), rgba(120,220,170,0.95));
-}
-
-.friend-message-card:nth-child(3n)::before {
-  background: linear-gradient(180deg, rgba(180,140,240,0.95), rgba(220,180,255,0.95));
+  background: linear-gradient(180deg, rgba(154, 112, 79, 0.9), rgba(210, 171, 134, 0.95));
 }
 
 .friend-message-name {
-  font-weight: 800;
-  font-size: 16px;
-  color: #b44f4f;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-size: 24px;
+  line-height: 1;
+  margin-bottom: 2px;
+  color: #6b4635;
 }
 
 .friend-message-text {
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 15px;
+  line-height: 1.58;
+  color: #5c4b41;
   white-space: pre-wrap;
+}
+
+.luxe-message-subtitle {
+  margin: 0 0 12px;
+  color: #5a463a;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 34px;
+  font-weight: 600;
 }
 
 @media screen and (max-width: 600px) {
