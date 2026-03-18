@@ -193,7 +193,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
             <div className="luxe-hero-content">
               <div className="luxe-hero-copy animate-box">
                 <h1>
-                  {data.groomName} <span>&amp;</span> {data.brideName}
+                  <span className="luxe-hero-name">{data.groomName}</span> <span className="luxe-hero-amp">&amp;</span> <span className="luxe-hero-name">{data.brideName}</span>
                 </h1>
                 <p className="luxe-hero-text">
                   A refined celebration of love, family, and the quiet beauty of a day made to be remembered.
@@ -447,8 +447,8 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
 
         <footer className="luxe-footer">
           <div className="container text-center">
-            <p className="luxe-footer-mark">{data.groomName} &amp; {data.brideName}</p>
-            <p className="luxe-footer-text">Crafted for a wedding story told with calm elegance and modern warmth.</p>
+            <p className="luxe-footer-mark">Cảm ơn bạn đã ghé thăm và chung vui cùng chúng mình</p>
+            <p className="luxe-footer-text">{data.groomName} &amp; {data.brideName} rất vui được chào đón bạn trong ngày đặc biệt này.</p>
           </div>
         </footer>
       </div>

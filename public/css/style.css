@@ -1509,17 +1509,25 @@ figure {
 .luxe-hero-copy h1 {
   margin: 0;
   color: #fff;
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Great Vibes", cursive;
   font-size: 78px;
-  line-height: 0.95;
-  font-weight: 500;
+  line-height: 1.05;
+  font-weight: 400;
   max-width: 640px;
 }
 
-.luxe-hero-copy h1 span {
+.luxe-hero-name {
+  display: inline-block;
+  text-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
+.luxe-hero-amp {
   color: #e8d9cb;
   font-style: italic;
-  margin: 0 8px;
+  margin: 0 10px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.82em;
+  vertical-align: middle;
 }
 
 .luxe-hero-text {
@@ -1746,10 +1754,13 @@ figure {
   text-align: center;
   gap: 12px;
   align-items: center;
-  padding: 48px 40px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #f3ece5, #fff);
-  border: 1px solid #ece1d7;
+  padding: 54px 44px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.92) 0%, rgba(255, 248, 244, 0.96) 42%, rgba(246, 233, 233, 0.96) 100%);
+  border: 1px solid rgba(230, 199, 206, 0.75);
+  box-shadow: 0 18px 48px rgba(183, 132, 145, 0.12);
+  font-family: "Cormorant Garamond", Georgia, serif;
 }
 
 .luxe-event-date-block {
@@ -1792,31 +1803,51 @@ figure {
 /* Vietnamese event wording styles */
 .luxe-event-title {
   display: block;
-  font-size: 16px;
-  color: #b0938c;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
+  font-family: "Great Vibes", cursive;
+  font-size: 56px;
+  color: #b85f79;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  margin-bottom: 2px;
+  font-weight: 400;
+  line-height: 1;
+  transform: rotate(-1.5deg);
+  text-shadow: 0 2px 12px rgba(182, 95, 121, 0.14);
+}
+
+.luxe-event-title::after {
+  content: "✦";
+  display: block;
+  margin-top: 6px;
+  color: rgba(182, 95, 121, 0.35);
+  font-size: 14px;
+  letter-spacing: 0;
+  transform: rotate(0deg);
 }
 
 .luxe-event-time {
-  font-size: 14px;
-  color: #6e6763;
-  margin: 0 0 8px 0;
-  font-weight: 600;
+  font-family: "Open Sans", Arial, sans-serif;
+  font-size: 18px;
+  color: #7b5d66;
+  margin: 6px 0 14px 0;
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
 .luxe-event-lunar {
   margin: 6px 0 0;
-  color: #7a6e68;
-  font-size: 13px;
+  color: #8f6f79;
+  font-family: "Open Sans", Arial, sans-serif;
+  font-size: 16px;
+  font-style: italic;
 }
 
 .luxe-event-address {
   margin-top: 10px;
-  font-size: 18px;
-  color: #c46b83;
-  font-weight: 500;
+  font-family: "Open Sans", Arial, sans-serif;
+  font-size: 22px;
+  color: #cb6f8b;
+  font-weight: 600;
 }
 
 .luxe-event-location a {
@@ -1828,8 +1859,8 @@ figure {
 /* address icon inside the visible address link */
 .luxe-event-address a .address-icon {
   margin-right: 8px;
-  color: #d25b6c;
-  font-size: 18px;
+  color: #d46b86;
+  font-size: 19px;
   vertical-align: middle;
 }
 
@@ -1856,35 +1887,40 @@ figure {
   text-align: center;
 }
 .luxe-event-3col .col-label {
-  font-size: 14px;
-  color: #b0938c;
-  letter-spacing: 0.18em;
+  font-size: 17px;
+  color: #b98294;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
+  font-weight: 600;
 }
 .luxe-event-3col .col-value {
-  font-size: 38px;
+  font-size: 50px;
   font-weight: 700;
-  color: #2f2a28;
+  color: #3a2b31;
   margin-top: 8px;
 }
 .luxe-event-3col .col-day-center {
   text-align: center;
 }
 .weekday-label {
-  font-size: 20px;
+  font-family: "Open Sans", Arial, sans-serif;
+  font-size: 24px;
   color: #fff;
-  background: #2f6fbf;
+  background: linear-gradient(135deg, #5e8ed1 0%, #8e72c6 100%);
   display: inline-block;
   padding: 6px 20px;
-  border-radius: 6px;
+  border-radius: 999px;
   margin-bottom: 8px;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  box-shadow: 0 8px 18px rgba(94, 142, 209, 0.18);
 }
 .col-day-big {
-  font-size: 120px;
+  font-size: 140px;
   line-height: 0.9;
   font-weight: 700;
-  color: #2f2a28;
+  color: #392b31;
+  text-shadow: 0 8px 20px rgba(182, 95, 121, 0.08);
 }
 .col-day-rest {
   font-size: 28px;
@@ -1898,16 +1934,21 @@ figure {
 }
 
 @media screen and (max-width: 900px) {
-  .col-day-big { font-size: 72px; }
-  .col-value { font-size: 30px; }
+  .luxe-event-title { font-size: 42px; }
+  .col-day-big { font-size: 82px; }
+  .col-value { font-size: 34px; }
+  .luxe-event-address { font-size: 18px; }
   .luxe-event-3col { gap: 12px; }
 }
 
 @media screen and (max-width: 480px) {
   .luxe-event-3col { grid-template-columns: 1fr; }
+  .luxe-event-title { font-size: 34px; }
   .weekday-label { font-size: 16px; }
-  .col-day-big { font-size: 48px; }
+  .col-day-big { font-size: 50px; }
   .col-value { font-size: 26px; }
+  .luxe-event-time { font-size: 14px; }
+  .luxe-event-address { font-size: 16px; }
 }
 
 .luxe-event-meta {
@@ -2114,16 +2155,21 @@ figure {
 
 .luxe-footer {
   padding: 42px 0 54px;
-  background: #221f1d;
+  background: linear-gradient(180deg, #fffaf5 0%, #f3ece5 100%);
+  border-top: 1px solid rgba(173, 144, 116, 0.2);
 }
 
 .luxe-footer-mark {
-  color: #d6c4b5;
+  color: #5a463a;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .luxe-footer-text {
   margin: 12px 0 0;
-  color: rgba(255, 255, 255, 0.62);
+  color: #7a6258;
   font-size: 15px;
 }
 
@@ -2341,6 +2387,11 @@ a.luxe-schedule-location:hover {
     font-size: 62px;
   }
 
+  .luxe-hero-amp {
+    font-size: 0.78em;
+    margin: 0 6px;
+  }
+
   .luxe-hero-panel-inner h2,
   .luxe-section-heading h2,
   .luxe-rsvp-card h2 {
@@ -2367,6 +2418,10 @@ a.luxe-schedule-location:hover {
 @media screen and (max-width: 575px) {
   .luxe-hero-copy h1 {
     font-size: 48px;
+  }
+
+  .luxe-hero-amp {
+    margin: 0 5px;
   }
 
   .luxe-section {
