@@ -1304,6 +1304,95 @@ figure {
   }
 }
 
+/* Magnific Popup Gallery Customization */
+.mfp-fade.mfp-bg {
+  opacity: 0;
+  filter: alpha(opacity=0);
+  transition: opacity 300ms ease-in-out;
+}
+.mfp-fade.mfp-bg.mfp-ready {
+  opacity: 0.8;
+}
+.mfp-fade.mfp-wrap .mfp-content {
+  opacity: 0;
+  filter: alpha(opacity=0);
+  transition: opacity 300ms ease-in-out;
+}
+.mfp-fade.mfp-wrap.mfp-ready .mfp-content {
+  opacity: 1;
+}
+.mfp-fade.mfp-wrap.mfp-removing .mfp-content {
+  opacity: 0;
+}
+.mfp-fade.mfp-wrap.mfp-removing .mfp-bg {
+  opacity: 0;
+}
+
+.mfp-image img {
+  max-width: 100%;
+  height: auto;
+}
+
+.mfp-counter {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.mfp-title {
+  text-align: center;
+  margin-top: 12px;
+  color: #d4af37;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Arrow buttons */
+.mfp-arrow {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 24px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Disable Magnific default arrow shapes to prevent overlap artifacts. */
+.mfp-arrow:before,
+.mfp-arrow:after {
+  display: none !important;
+}
+
+.mfp-arrow:hover {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: #fff;
+}
+
+.mfp-arrow-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-top: 3px solid #fff;
+  border-right: 3px solid #fff;
+}
+
+.mfp-arrow-left .mfp-arrow-icon {
+  transform: rotate(-135deg);
+  margin-left: 4px;
+}
+
+.mfp-arrow-right .mfp-arrow-icon {
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+
 /* Circular bride/groom avatars */
 #fh5co-couple .wedding-avatar {
   width: 180px;
@@ -1380,6 +1469,7 @@ figure {
   background-position: center;
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 120px 0 70px;
 }
 
@@ -1388,12 +1478,16 @@ figure {
   grid-template-columns: 1fr;
   gap: 28px;
   align-items: center;
+  justify-items: center;
+  text-align: center;
 }
 
 .luxe-hero-content {
   display: grid;
   gap: 22px;
   align-content: center;
+  justify-items: center;
+  text-align: center;
 }
 
 .luxe-kicker {
@@ -1435,6 +1529,7 @@ figure {
   flex-wrap: wrap;
   gap: 14px;
   margin-top: 28px;
+  justify-content: center;
 }
 
 .luxe-meta-pill {

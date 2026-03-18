@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import type { WeddingData } from "../lib/wedding-data";
 import { convertSolar2Lunar, getYearName } from "../lib/wedding-data";
 
@@ -121,6 +121,49 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
       items.forEach((item) => observer.unobserve(item));
       observer.disconnect();
     };
+  }, []);
+
+  // Initialize Magnific Popup for gallery
+  useEffect(() => {
+    const initGallery = () => {
+      const $ = (window as any).$;
+      if (!$ || !$.fn.magnificPopup) {
+        console.warn("Magnific Popup not available");
+        return;
+      }
+
+      $(".wedding-gallery-grid").magnificPopup({
+        delegate: ".image-popup",
+        type: "image",
+        gallery: {
+          enabled: true,
+          preload: [0, 2],
+          navigateByImgClick: true,
+          // Keep arrow button markup title-free to avoid default browser tooltip.
+          arrowMarkup:
+            '<button type="button" class="mfp-arrow mfp-arrow-%dir% mfp-prevent-close"><span class="mfp-arrow-icon" aria-hidden="true"></span></button>',
+          tCounter: "%curr% / %total%",
+        },
+        image: {
+          titleSrc: "data-title",
+        },
+        zoom: {
+          enabled: true,
+          duration: 300,
+        },
+        mainClass: "mfp-fade",
+        removalDelay: 300,
+      });
+    };
+
+    // Load Magnific Popup if not already loaded
+    const script = document.querySelector('script[src*="magnific-popup"]');
+    if (script && script.hasAttribute("data-loaded")) {
+      initGallery();
+    } else {
+      const timer = setTimeout(initGallery, 500);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   return (
@@ -349,14 +392,14 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
           <div className="container">
             <div className="luxe-section-heading text-center animate-box">
               <span className="luxe-kicker">Curated Gallery</span>
-              <h2>Collected In Twelve Frames</h2>
-              <p>A structured visual grid that feels calm, premium, and polished.</p>
+              <h2>Our Favorite Moments</h2>
+              <p>A curated collection of memories from our special day.</p>
             </div>
 
             <div className="wedding-gallery-grid">
-              {data.galleryImages.slice(0, 12).map((image, index) => (
-                <a className="wedding-gallery-thumb image-popup animate-box" href={image} key={`${image}-${index}`}>
-                  <img src={image} alt={`Wedding gallery ${index + 1}`} />
+              {data.galleryImages.map((image, index) => (
+                <a className="wedding-gallery-thumb image-popup animate-box" href={image} key={`${image}-${index}`} data-mfp-src={image} data-title={`Photo ${index + 1}`}>
+                  <img src={image} alt={`Wedding gallery ${index + 1}`} loading="lazy" />
                 </a>
               ))}
             </div>

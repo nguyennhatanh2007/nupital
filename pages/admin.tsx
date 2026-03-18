@@ -45,14 +45,15 @@ type AdminWedding = {
   weddingEvents: AdminWeddingEvent[];
 };
 
-const GALLERY_SIZE = 12;
+const MIN_GALLERY_SIZE = 6;
+const MAX_GALLERY_SIZE = 20;
 
 function normalizeGallerySlots(gallery: string[]): string[] {
-  const cleaned = gallery.map((item) => item.trim());
-  if (cleaned.length >= GALLERY_SIZE) {
-    return cleaned.slice(0, GALLERY_SIZE);
+  const cleaned = gallery.map((item) => item.trim()).filter(Boolean);
+  if (cleaned.length > MAX_GALLERY_SIZE) {
+    return cleaned.slice(0, MAX_GALLERY_SIZE);
   }
-  return [...cleaned, ...Array.from({ length: GALLERY_SIZE - cleaned.length }, () => "")];
+  return cleaned;
 }
 
 type AdminPageProps = {
@@ -213,6 +214,23 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     });
   };
 
+  const removeGalleryImage = (index: number) => {
+    setForm((prev) => {
+      if (!prev) return prev;
+      const next = [...prev.gallery];
+      next.splice(index, 1);
+      return { ...prev, gallery: next };
+    });
+  };
+
+  const addGallerySlot = () => {
+    setForm((prev) => {
+      if (!prev) return prev;
+      if (prev.gallery.length >= MAX_GALLERY_SIZE) return prev;
+      return { ...prev, gallery: [...prev.gallery, ""] };
+    });
+  };
+
   const uploadImage = async (file: File): Promise<string> => {
     const readerResult = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -275,8 +293,8 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     if (!payload.brideImage.trim()) issues.push("Bride avatar image is required.");
 
     const galleryCount = payload.gallery.map((item) => item.trim()).filter(Boolean).length;
-    if (galleryCount !== GALLERY_SIZE) {
-      issues.push(`Gallery must contain exactly ${GALLERY_SIZE} images.`);
+    if (galleryCount < MIN_GALLERY_SIZE || galleryCount > MAX_GALLERY_SIZE) {
+      issues.push(`Gallery must contain between ${MIN_GALLERY_SIZE} and ${MAX_GALLERY_SIZE} images. You have ${galleryCount}.`);
     }
 
     const validMilestones = payload.loveStory.filter((item) => item.title.trim() || item.description.trim());
@@ -521,11 +539,23 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
 
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>Gallery</h2>
-            <p className={styles.helper}>Exactly 12 images required. Upload one image for each slot.</p>
+            <p className={styles.helper}>Upload between {MIN_GALLERY_SIZE} and {MAX_GALLERY_SIZE} images. Currently {form.gallery.filter(img => img.trim()).length} images.</p>
             <div className={styles.gallerySlotGrid}>
               {form.gallery.map((imagePath, index) => (
                 <div key={`slot-${index}`} className={styles.gallerySlotCard}>
-                  <div className={styles.gallerySlotHeader}>Image {index + 1}</div>
+                  <div className={styles.gallerySlotHeader}>
+                    <span>Image {index + 1}</span>
+                    {imagePath && form.gallery.filter(img => img.trim()).length > MIN_GALLERY_SIZE && (
+                      <button
+                        type="button"
+                        className={styles.removeButton}
+                        onClick={() => removeGalleryImage(index)}
+                        title="Remove this image"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                   <div className={styles.galleryPreviewFrame}>
                     {imagePath ? (
                       <img src={imagePath} alt={`Gallery slot ${index + 1}`} className={styles.galleryPreviewImage} />
@@ -534,7 +564,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                     )}
                   </div>
                   <div className={styles.imageFieldRow}>
-                    <input className="form-control" value={imagePath} readOnly required />
+                    <input className="form-control" value={imagePath} readOnly />
                     <label className={styles.uploadButton}>
                       Upload
                       <input
@@ -547,7 +577,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                             (path) => {
                               const next = [...form.gallery];
                               next[index] = path;
-                              updateField("gallery", normalizeGallerySlots(next));
+                              updateField("gallery", next);
                             },
                             e.target.files?.[0]
                           )
@@ -558,6 +588,11 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                 </div>
               ))}
             </div>
+            {form.gallery.length < MAX_GALLERY_SIZE && (
+              <button type="button" className={styles.addButton} onClick={addGallerySlot}>
+                + Add Gallery Slot ({form.gallery.length}/{MAX_GALLERY_SIZE})
+              </button>
+            )}
           </section>
 
           <section className={styles.card}>

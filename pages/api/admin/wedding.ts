@@ -87,13 +87,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  const MIN_GALLERY_SIZE = 6;
+  const MAX_GALLERY_SIZE = 20;
+  
   const normalizedGallery = body.gallery
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
     .filter(Boolean);
 
-  if (normalizedGallery.length !== 12) {
-    return res.status(400).json({ message: "Gallery must contain exactly 12 images." });
+  if (normalizedGallery.length < MIN_GALLERY_SIZE || normalizedGallery.length > MAX_GALLERY_SIZE) {
+    return res.status(400).json({ message: `Gallery must contain between ${MIN_GALLERY_SIZE} and ${MAX_GALLERY_SIZE} images.` });
   }
 
   try {
