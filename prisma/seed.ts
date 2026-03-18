@@ -62,6 +62,34 @@ async function main() {
           },
         ],
       },
+      weddingEvents: {
+        create: [
+          {
+            type: "GROOM_PARTY",
+            title: "Tiệc Cưới Nhà Trai",
+            dateTime: new Date("2027-12-27T18:00:00.000Z"),
+            lunarDate: "Ngày 19 tháng 11 năm Đinh Mùi (Âm lịch)",
+            locationName: "Tư Gia Nhà Trai - Quận 7, TP.HCM",
+            locationUrl: "https://maps.google.com/?q=10.729,106.721",
+          },
+          {
+            type: "BRIDE_PARTY",
+            title: "Tiệc Cưới Nhà Gái",
+            dateTime: new Date("2027-12-28T03:00:00.000Z"),
+            lunarDate: "Ngày 20 tháng 11 năm Đinh Mùi (Âm lịch)",
+            locationName: "Tư Gia Nhà Gái - Thủ Đức, TP.HCM",
+            locationUrl: "https://maps.google.com/?q=10.841,106.809",
+          },
+          {
+            type: "CEREMONY",
+            title: "Lễ Thành Hôn",
+            dateTime: new Date("2027-12-28T10:00:00.000Z"),
+            lunarDate: "Ngày 20 tháng 11 năm Đinh Mùi (Âm lịch)",
+            locationName: "Riverside Palace, TP.HCM",
+            locationUrl: "https://maps.google.com/?q=10.762,106.706",
+          },
+        ],
+      },
       bankQrInfo: {
         create: {
           bankName: "VCB",

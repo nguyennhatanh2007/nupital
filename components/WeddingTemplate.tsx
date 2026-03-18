@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import type { WeddingData } from "../lib/wedding-data";
 import { convertSolar2Lunar, getYearName } from "../lib/wedding-data";
 
@@ -93,6 +94,14 @@ type WeddingTemplateProps = {
 export default function WeddingTemplate({ data }: WeddingTemplateProps) {
   const [visibleMilestones, setVisibleMilestones] = useState<Set<number>>(new Set());
   const visibleRef = React.useRef<Set<number>>(new Set());
+  const sortedWeddingEvents = [...data.weddingEvents].sort(
+    (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+  );
+  const scheduleTypeClass: Record<string, string> = {
+    GROOM_PARTY: "groom",
+    BRIDE_PARTY: "bride",
+    CEREMONY: "ceremony",
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -312,36 +321,38 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                 <span className="luxe-kicker">Lịch Trình</span>
                 <h2>Ngày Trọng Đại</h2>
               </div>
-              <div className="luxe-schedule-grid">
-                {data.weddingEvents.map((ev) => {
-                  const dt = new Date(ev.dateTime);
-                  const timeStr = dt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-                  const dateStr = dt.toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-                  return (
-                    <article className="luxe-schedule-card animate-box" key={ev.type}>
-                      <div className="luxe-schedule-time">{timeStr}</div>
-                      <div className="luxe-schedule-body">
-                        <h3>{ev.title}</h3>
-                        <p className="luxe-schedule-date">{dateStr}</p>
-                        {ev.lunarDate && (
-                          <p className="luxe-schedule-lunar">🌙 {ev.lunarDate}</p>
-                        )}
-                        {ev.locationUrl ? (
-                          <a
-                            href={ev.locationUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="luxe-schedule-location"
-                          >
-                            📍 {ev.locationName}
-                          </a>
-                        ) : (
-                          <p className="luxe-schedule-location">📍 {ev.locationName}</p>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
+              <div className="luxe-schedule-runway">
+                {(() => {
+                  const hasCeremony = sortedWeddingEvents.some((item) => item.type === "CEREMONY");
+                  return sortedWeddingEvents.map((ev, index) => {
+                    const dt = new Date(ev.dateTime);
+                    const timeStr = dt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+                    const dateStr = dt.toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+                    const typeClass = scheduleTypeClass[ev.type] || "default";
+                    const isMainEvent = ev.type === "CEREMONY" || (!hasCeremony && index === 0);
+                    return (
+                      <article className={`luxe-schedule-stop luxe-schedule-stop-${typeClass} animate-box`} key={ev.type}>
+                        <div className="luxe-schedule-node">
+                          <span className="luxe-schedule-time">{timeStr}</span>
+                        </div>
+
+                        <div className={`luxe-schedule-card ${isMainEvent ? "luxe-schedule-card-main" : ""}`}>
+                          {isMainEvent && <span className="luxe-schedule-main">MAIN EVENT</span>}
+                          <h3>{ev.title}</h3>
+                          <p className="luxe-schedule-date">{dateStr}</p>
+                          {ev.lunarDate && <p className="luxe-schedule-lunar">🌙 {ev.lunarDate}</p>}
+                          {ev.locationUrl ? (
+                            <a href={ev.locationUrl} target="_blank" rel="noopener noreferrer" className="luxe-schedule-location">
+                              📍 {ev.locationName}
+                            </a>
+                          ) : (
+                            <p className="luxe-schedule-location">📍 {ev.locationName}</p>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </section>
@@ -399,7 +410,17 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
             <div className="wedding-gallery-grid">
               {data.galleryImages.map((image, index) => (
                 <a className="wedding-gallery-thumb image-popup animate-box" href={image} key={`${image}-${index}`} data-mfp-src={image} data-title={`Photo ${index + 1}`}>
-                  <img src={image} alt={`Wedding gallery ${index + 1}`} loading="lazy" />
+                  <Image
+                    src={image}
+                    alt={`Wedding gallery ${index + 1}`}
+                    width={1000}
+                    height={1250}
+                    unoptimized
+                    quality={90}
+                    sizes="(max-width: 575px) 100vw, (max-width: 991px) 50vw, 33vw"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </a>
               ))}
             </div>
