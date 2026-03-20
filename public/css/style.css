@@ -1282,8 +1282,8 @@ figure {
 .wedding-gallery-thumb img {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 10;
-  max-height: 320px;
+  aspect-ratio: 3 / 4;
+  max-height: 420px;
   object-fit: cover;
   transition: transform 0.25s ease;
 }
@@ -1305,8 +1305,8 @@ figure {
   }
 
   .wedding-gallery-thumb img {
-    aspect-ratio: 16 / 9;
-    max-height: 220px;
+    aspect-ratio: 3 / 4;
+    max-height: 360px;
   }
 }
 
