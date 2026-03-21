@@ -1,7 +1,7 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Head from "next/head";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { prisma } from "../lib/prisma";
 import { normalizeUploadPath } from "../lib/wedding-data";
@@ -193,6 +193,11 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const formRef = useRef<AdminWedding | null>(wedding);
+
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   if (!form) {
     return (
@@ -343,6 +348,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
         },
         body: JSON.stringify({
           ...payloadToSave,
+          saveSource: source,
           gallery: normalizedGallery.map((item) => item.trim()).filter(Boolean),
           loveStory: payloadToSave.loveStory.map((item, index) => ({ ...item, order: index + 1 })),
           weddingEvents: payloadToSave.weddingEvents,
@@ -396,7 +402,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     applyPathUpdate: (current: AdminWedding, path: string) => AdminWedding,
     file?: File | null
   ) => {
-    if (!file || !form) return;
+    if (!file || !formRef.current) return;
 
     setUploadingField(fieldKey);
     setMessage(null);
@@ -404,7 +410,13 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     try {
       const uploadPurpose = fieldKey.includes("bankQr") ? "qr" : "image";
       const uploadResult = await uploadImage(file, uploadPurpose);
-      const nextForm = applyPathUpdate(form, uploadResult.path);
+      const currentForm = formRef.current;
+      if (!currentForm) {
+        throw new Error("Form is not ready. Please try again.");
+      }
+
+      const nextForm = applyPathUpdate(currentForm, uploadResult.path);
+      formRef.current = nextForm;
       setForm(nextForm);
       const saved = await persistWedding(nextForm, "upload");
 

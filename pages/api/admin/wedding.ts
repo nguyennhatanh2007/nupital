@@ -108,6 +108,7 @@ type LoveStoryInput = {
 
 type UpdateWeddingBody = {
   id: number;
+  saveSource?: "manual" | "upload";
   brideName: string;
   brideBio: string;
   groomName: string;
@@ -282,7 +283,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const body = req.body as UpdateWeddingBody;
 
-  await serverLogger.apiRequest("/api/admin/wedding", "PUT", { weddingId: body?.id });
+  await serverLogger.apiRequest("/api/admin/wedding", "PUT", {
+    weddingId: body?.id,
+    saveSource: body?.saveSource || "unknown",
+  });
 
   if (
     !Number.isInteger(body.id) ||
@@ -334,6 +338,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .map((item) => normalizeAssetPath(item))
     .filter(Boolean);
 
+  await serverLogger.debug("API_WEDDING", "Normalized payload snapshot", {
+    weddingId: body.id,
+    saveSource: body.saveSource || "unknown",
+    galleryCount: normalizedGallery.length,
+    loveStoryCount: normalizedLoveStory.length,
+    timelineImages: normalizedLoveStory.map((item, index) => ({
+      index: index + 1,
+      title: item.title,
+      image: item.image,
+    })),
+  });
+
   if (normalizedGallery.length < MIN_GALLERY_SIZE || normalizedGallery.length > MAX_GALLERY_SIZE) {
     await serverLogger.warn("API_WEDDING", "PUT validation failed - invalid gallery size", {
       weddingId: body.id,
@@ -377,6 +393,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!beforeUpdate) {
       return res.status(404).json({ message: "Wedding record not found." });
     }
+
+    await serverLogger.debug("API_WEDDING", "DB snapshot before update", {
+      weddingId: body.id,
+      saveSource: body.saveSource || "unknown",
+      timelineImagesBefore: beforeUpdate.loveStory.map((item, index) => ({
+        index: index + 1,
+        image: item.image,
+      })),
+    });
 
     await prisma.$transaction(async (tx) => {
       await tx.wedding.update({
@@ -531,10 +556,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await cleanupRemovedUploads(removed);
 
+    await serverLogger.debug("API_WEDDING", "DB snapshot after update", {
+      weddingId: body.id,
+      saveSource: body.saveSource || "unknown",
+      timelineImagesAfter: afterUpdate?.loveStory.map((item, index) => ({
+        index: index + 1,
+        image: item.image,
+      })) || [],
+      removedUploadCount: removed.size,
+    });
+
     await serverLogger.info("API_WEDDING", "Wedding updated successfully", {
       weddingId: body.id,
       groomName: body.groomName,
       brideName: body.brideName,
+      saveSource: body.saveSource || "unknown",
     });
     await serverLogger.apiResponse("/api/admin/wedding", 200, 0);
 
