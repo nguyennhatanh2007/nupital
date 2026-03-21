@@ -7,7 +7,7 @@ import jsQR from "jsqr";
 import { serverLogger } from "../../../lib/logger-server";
 
 const RESPONSIVE_WIDTHS = [768, 1440, 2200] as const;
-const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_IMAGE_MEGAPIXELS = 20;
 const MAX_STORED_EDGE = 2400;
 const QR_DETECT_MAX_EDGE = 1600;
@@ -329,7 +329,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (isTooLarge) {
-      return res.status(413).json({ message: "File too large. Maximum allowed size is 12MB." });
+      return res.status(413).json({ message: "File too large. Maximum allowed size is 20MB." });
     }
 
     return res.status(500).json({ message: "Failed to save image." });
