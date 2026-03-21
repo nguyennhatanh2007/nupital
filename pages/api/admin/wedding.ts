@@ -4,6 +4,7 @@ import path from "path";
 
 import { prisma } from "../../../lib/prisma";
 import { serverLogger } from "../../../lib/logger-server";
+import { normalizeUploadPath as normalizeAssetPath } from "../../../lib/wedding-data";
 
 const UPLOAD_PREFIX = "/uploads/";
 const VIETNAM_TZ = "Asia/Ho_Chi_Minh";
@@ -230,24 +231,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         groomBio: wedding.groomBio,
         weddingDate: toDateOnlyValue(wedding.weddingDate),
         location: wedding.location,
-        heroImage: wedding.heroImage,
-        groomImage: wedding.groomImage,
-        brideImage: wedding.brideImage,
+        heroImage: normalizeAssetPath(wedding.heroImage),
+        groomImage: normalizeAssetPath(wedding.groomImage),
+        brideImage: normalizeAssetPath(wedding.brideImage),
         bankQrGroomBankName: wedding.bankQrInfo?.groomBankName || wedding.bankQrInfo?.bankName || "",
         bankQrGroomAccountNumber: wedding.bankQrInfo?.groomAccountNumber || wedding.bankQrInfo?.accountNumber || "",
         bankQrGroomOwnerName: wedding.bankQrInfo?.groomOwnerName || wedding.groomName,
-        bankQrGroomImage: wedding.bankQrInfo?.groomQrImage || wedding.bankQrInfo?.qrImage || "",
+        bankQrGroomImage: normalizeAssetPath(wedding.bankQrInfo?.groomQrImage || wedding.bankQrInfo?.qrImage || ""),
         bankQrBrideBankName: wedding.bankQrInfo?.brideBankName || wedding.bankQrInfo?.bankName || "",
         bankQrBrideAccountNumber: wedding.bankQrInfo?.brideAccountNumber || wedding.bankQrInfo?.accountNumber || "",
         bankQrBrideOwnerName: wedding.bankQrInfo?.brideOwnerName || wedding.brideName,
-        bankQrBrideImage: wedding.bankQrInfo?.brideQrImage || wedding.bankQrInfo?.qrImage || "",
-        gallery,
+        bankQrBrideImage: normalizeAssetPath(wedding.bankQrInfo?.brideQrImage || wedding.bankQrInfo?.qrImage || ""),
+        gallery: gallery.map((item) => normalizeAssetPath(item)),
         loveStory: wedding.loveStory.map((item) => ({
           id: item.id,
           title: item.title,
           eventDate: toDateOnlyValue(item.eventDate),
           description: item.description,
-          image: item.image,
+          image: normalizeAssetPath(item.image),
           order: item.order,
         })),
         weddingEvents: wedding.weddingEvents.map((ev) => ({
@@ -313,7 +314,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       title: typeof item.title === "string" ? item.title.trim() : "",
       eventDate: typeof item.eventDate === "string" ? item.eventDate : "",
       description: typeof item.description === "string" ? item.description.trim() : "",
-      image: typeof item.image === "string" ? item.image.trim() : "",
+      image: normalizeAssetPath(typeof item.image === "string" ? item.image : ""),
       order: Number.isInteger(item.order) ? item.order : index + 1,
     }))
     .filter((item) => item.title && item.eventDate && item.description);
@@ -330,7 +331,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   
   const normalizedGallery = body.gallery
     .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
+    .map((item) => normalizeAssetPath(item))
     .filter(Boolean);
 
   if (normalizedGallery.length < MIN_GALLERY_SIZE || normalizedGallery.length > MAX_GALLERY_SIZE) {
@@ -387,9 +388,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           groomBio: typeof body.groomBio === "string" ? body.groomBio.trim() : "",
           weddingDate: parsedWeddingDate,
           location: body.location.trim(),
-          heroImage: body.heroImage.trim(),
-          groomImage: body.groomImage.trim(),
-          brideImage: body.brideImage.trim(),
+          heroImage: normalizeAssetPath(body.heroImage),
+          groomImage: normalizeAssetPath(body.groomImage),
+          brideImage: normalizeAssetPath(body.brideImage),
           gallery: normalizedGallery,
         },
       });
@@ -398,11 +399,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const groomBankName = typeof body.bankQrInfo.groomBankName === "string" ? body.bankQrInfo.groomBankName.trim() : "";
           const groomAccountNumber = typeof body.bankQrInfo.groomAccountNumber === "string" ? body.bankQrInfo.groomAccountNumber.trim() : "";
           const groomOwnerName = typeof body.bankQrInfo.groomOwnerName === "string" ? body.bankQrInfo.groomOwnerName.trim() : "";
-          const groomQrImage = typeof body.bankQrInfo.groomQrImage === "string" ? body.bankQrInfo.groomQrImage.trim() : "";
+          const groomQrImage = normalizeAssetPath(typeof body.bankQrInfo.groomQrImage === "string" ? body.bankQrInfo.groomQrImage : "");
           const brideBankName = typeof body.bankQrInfo.brideBankName === "string" ? body.bankQrInfo.brideBankName.trim() : "";
           const brideAccountNumber = typeof body.bankQrInfo.brideAccountNumber === "string" ? body.bankQrInfo.brideAccountNumber.trim() : "";
           const brideOwnerName = typeof body.bankQrInfo.brideOwnerName === "string" ? body.bankQrInfo.brideOwnerName.trim() : "";
-          const brideQrImage = typeof body.bankQrInfo.brideQrImage === "string" ? body.bankQrInfo.brideQrImage.trim() : "";
+          const brideQrImage = normalizeAssetPath(typeof body.bankQrInfo.brideQrImage === "string" ? body.bankQrInfo.brideQrImage : "");
 
           console.log("[API] Processing bankQrInfo - groomBankName:", groomBankName, "brideBankName:", brideBankName);
 
@@ -490,7 +491,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             title: item.title,
             eventDate: parseDateOnlyValue(item.eventDate) as Date,
             description: item.description,
-            image: item.image || "/images/gallery-1.jpg",
+              image: normalizeAssetPath(item.image) || "/images/gallery-1.jpg",
             order: item.order || index + 1,
           })),
         });

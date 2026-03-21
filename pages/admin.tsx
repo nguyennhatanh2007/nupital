@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 import { prisma } from "../lib/prisma";
+import { normalizeUploadPath } from "../lib/wedding-data";
 import styles from "./admin.module.css";
 
 type AdminWeddingEvent = {
@@ -133,18 +134,18 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
         groomBio: wedding.groomBio,
         weddingDate: toDateOnlyValue(wedding.weddingDate),
         location: wedding.location,
-        heroImage: wedding.heroImage,
-        groomImage: wedding.groomImage,
-        brideImage: wedding.brideImage,
+        heroImage: normalizeUploadPath(wedding.heroImage),
+        groomImage: normalizeUploadPath(wedding.groomImage),
+        brideImage: normalizeUploadPath(wedding.brideImage),
         bankQrGroomBankName: wedding.bankQrInfo?.groomBankName || wedding.bankQrInfo?.bankName || "",
         bankQrGroomAccountNumber: wedding.bankQrInfo?.groomAccountNumber || wedding.bankQrInfo?.accountNumber || "",
         bankQrGroomOwnerName: wedding.bankQrInfo?.groomOwnerName || wedding.groomName,
-        bankQrGroomImage: wedding.bankQrInfo?.groomQrImage || wedding.bankQrInfo?.qrImage || "",
+        bankQrGroomImage: normalizeUploadPath(wedding.bankQrInfo?.groomQrImage || wedding.bankQrInfo?.qrImage || ""),
         bankQrBrideBankName: wedding.bankQrInfo?.brideBankName || wedding.bankQrInfo?.bankName || "",
         bankQrBrideAccountNumber: wedding.bankQrInfo?.brideAccountNumber || wedding.bankQrInfo?.accountNumber || "",
         bankQrBrideOwnerName: wedding.bankQrInfo?.brideOwnerName || wedding.brideName,
-        bankQrBrideImage: wedding.bankQrInfo?.brideQrImage || wedding.bankQrInfo?.qrImage || "",
-        gallery: normalizeGallerySlots(gallery),
+        bankQrBrideImage: normalizeUploadPath(wedding.bankQrInfo?.brideQrImage || wedding.bankQrInfo?.qrImage || ""),
+        gallery: normalizeGallerySlots(gallery.map((item) => normalizeUploadPath(item))),
         loveStory: (() => {
           const items = wedding.loveStory
             .slice()
@@ -154,7 +155,7 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
               title: item.title,
               eventDate: toDateOnlyValue(item.eventDate),
               description: item.description,
-              image: item.image,
+              image: normalizeUploadPath(item.image),
               order: item.order,
             }));
 

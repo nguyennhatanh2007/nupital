@@ -47,9 +47,24 @@ type WeddingWithStory = Wedding & {
   bankQrInfo: BankQrInfo | null;
 };
 
+export function normalizeUploadPath(value: unknown): string {
+  if (typeof value !== "string") return "";
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("/")) return trimmed;
+  if (trimmed.startsWith("uploads/")) return `/${trimmed}`;
+  if (/\.(jpe?g|png|webp|avif|gif)$/i.test(trimmed)) {
+    return `/uploads/${trimmed.replace(/^\.\/?/, "")}`;
+  }
+
+  return trimmed;
+}
+
 export function mapWeddingToWeddingData(wedding: WeddingWithStory): WeddingData {
   const galleryImages = Array.isArray(wedding.gallery)
-    ? wedding.gallery.filter((item): item is string => typeof item === "string")
+    ? wedding.gallery.filter((item): item is string => typeof item === "string").map((item) => normalizeUploadPath(item))
     : [];
 
   return {
@@ -59,9 +74,9 @@ export function mapWeddingToWeddingData(wedding: WeddingWithStory): WeddingData 
     brideBio: wedding.brideBio,
     weddingDate: wedding.weddingDate.toISOString().split("T")[0],
     location: wedding.location,
-    heroImage: wedding.heroImage,
-    groomImage: wedding.groomImage,
-    brideImage: wedding.brideImage,
+    heroImage: normalizeUploadPath(wedding.heroImage),
+    groomImage: normalizeUploadPath(wedding.groomImage),
+    brideImage: normalizeUploadPath(wedding.brideImage),
     storyMilestones: wedding.loveStory
       .slice()
       .sort((a, b) => a.order - b.order)
@@ -69,7 +84,7 @@ export function mapWeddingToWeddingData(wedding: WeddingWithStory): WeddingData 
           title: item.title,
           date: item.eventDate.toISOString().split("T")[0],
           description: item.description,
-          image: (item as any).image || undefined,
+            image: normalizeUploadPath((item as any).image) || undefined,
       })),
     galleryImages,
     bankQrInfo: wedding.bankQrInfo

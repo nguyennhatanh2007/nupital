@@ -493,7 +493,16 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
 
                       <div className={`timeline-block timeline-block-left`}>
                         {milestone.image ? (
-                          <img src={milestone.image} alt={milestone.title} className="timeline-image" />
+                          <img
+                            src={milestone.image}
+                            alt={milestone.title}
+                            className="timeline-image"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (target.src.includes("/images/gallery-1.jpg")) return;
+                              target.src = "/images/gallery-1.jpg";
+                            }}
+                          />
                         ) : null}
                       </div>
 
@@ -526,7 +535,6 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                   <a className="wedding-gallery-thumb image-popup animate-box" href={popupSrc} key={`${image}-${index}`} data-mfp-src={popupSrc} data-title={`Photo ${index + 1}`}>
                     {responsiveSet ? (
                       <picture>
-                        <source type="image/avif" srcSet={responsiveSet.avifSrcSet} sizes="(max-width: 575px) 100vw, (max-width: 991px) 50vw, 33vw" />
                         <source type="image/webp" srcSet={responsiveSet.webpSrcSet} sizes="(max-width: 575px) 100vw, (max-width: 991px) 50vw, 33vw" />
                         <img
                           src={responsiveSet.fallbackSrc}
@@ -535,6 +543,12 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                           alt={`Wedding gallery ${index + 1}`}
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src.includes("/images/gallery-1.jpg")) return;
+                            target.src = "/images/gallery-1.jpg";
+                            target.srcset = "";
+                          }}
                         />
                       </picture>
                     ) : (
@@ -543,6 +557,11 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                         alt={`Wedding gallery ${index + 1}`}
                         loading="lazy"
                         decoding="async"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src.includes("/images/gallery-1.jpg")) return;
+                          target.src = "/images/gallery-1.jpg";
+                        }}
                       />
                     )}
                   </a>

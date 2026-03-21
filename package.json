@@ -2,6 +2,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "dev:recheck": "powershell -ExecutionPolicy Bypass -File ./scripts/restart-dev-and-check.ps1",
+    "dev:recheck:fast": "powershell -ExecutionPolicy Bypass -File ./scripts/restart-dev-and-check.ps1 -SkipBuild",
     "start": "next start",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
