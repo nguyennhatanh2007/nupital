@@ -153,14 +153,21 @@
 .galleryPreviewFrame {
   border-radius: 10px;
   border: 1px dashed #dfcaca;
-  min-height: 126px;
-  height: 126px;
+  aspect-ratio: 3 / 4;
+  min-height: 160px;
+  height: auto;
   flex: 0 0 auto;
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.galleryPreviewMedia {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .galleryPreviewImage {

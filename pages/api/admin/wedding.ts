@@ -6,6 +6,7 @@ import { prisma } from "../../../lib/prisma";
 import { serverLogger } from "../../../lib/logger-server";
 
 const UPLOAD_PREFIX = "/uploads/";
+const VIETNAM_TZ = "Asia/Ho_Chi_Minh";
 
 type WeddingSnapshot = {
   heroImage: string;
@@ -134,6 +135,63 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function parseWeddingEventDateTime(value: string): Date | null {
+  const trimmed = value.trim();
+
+  // Handle datetime-local payload from admin (YYYY-MM-DDTHH:mm) as Vietnam local time UTC+7.
+  const localMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (localMatch) {
+    const year = Number(localMatch[1]);
+    const month = Number(localMatch[2]);
+    const day = Number(localMatch[3]);
+    const hour = Number(localMatch[4]);
+    const minute = Number(localMatch[5]);
+
+    const utcMillis = Date.UTC(year, month - 1, day, hour - 7, minute, 0, 0);
+    const parsed = new Date(utcMillis);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  // Keep compatibility for ISO payloads with timezone info.
+  const fallback = new Date(trimmed);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function parseDateOnlyValue(value: string): Date | null {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function toDateOnlyValue(date: Date): string {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: VIETNAM_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function toDateTimeLocalValue(date: Date): string {
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: VIETNAM_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  return parts.replace(" ", "T");
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     try {
@@ -170,7 +228,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         brideBio: wedding.brideBio,
         groomName: wedding.groomName,
         groomBio: wedding.groomBio,
-        weddingDate: wedding.weddingDate.toISOString().slice(0, 10),
+        weddingDate: toDateOnlyValue(wedding.weddingDate),
         location: wedding.location,
         heroImage: wedding.heroImage,
         groomImage: wedding.groomImage,
@@ -187,7 +245,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         loveStory: wedding.loveStory.map((item) => ({
           id: item.id,
           title: item.title,
-          eventDate: item.eventDate.toISOString().slice(0, 10),
+          eventDate: toDateOnlyValue(item.eventDate),
           description: item.description,
           image: item.image,
           order: item.order,
@@ -195,7 +253,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         weddingEvents: wedding.weddingEvents.map((ev) => ({
           type: ev.type,
           title: ev.title,
-          dateTime: ev.dateTime.toISOString().slice(0, 16),
+          dateTime: toDateTimeLocalValue(ev.dateTime),
           lunarDate: ev.lunarDate,
           locationName: ev.locationName,
           locationUrl: ev.locationUrl,
@@ -241,8 +299,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ message: "Missing required fields." });
   }
 
-  const parsedWeddingDate = new Date(body.weddingDate);
-  if (Number.isNaN(parsedWeddingDate.getTime())) {
+  const parsedWeddingDate = parseDateOnlyValue(body.weddingDate);
+  if (!parsedWeddingDate) {
     await serverLogger.warn("API_WEDDING", "PUT validation failed - invalid weddingDate", {
       weddingId: body.id,
       weddingDate: body.weddingDate,
@@ -261,8 +319,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .filter((item) => item.title && item.eventDate && item.description);
 
   for (const milestone of normalizedLoveStory) {
-    const parsedDate = new Date(milestone.eventDate);
-    if (Number.isNaN(parsedDate.getTime())) {
+    const parsedDate = parseDateOnlyValue(milestone.eventDate);
+    if (!parsedDate) {
       return res.status(400).json({ message: `Invalid milestone date: ${milestone.eventDate}` });
     }
   }
@@ -400,16 +458,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Upsert wedding events
       if (Array.isArray(body.weddingEvents)) {
         await tx.weddingEvent.deleteMany({ where: { weddingId: body.id } });
-        const validEvents = body.weddingEvents.filter(
-          (ev) => ev.type && ev.dateTime && !Number.isNaN(new Date(ev.dateTime).getTime())
-        );
+        const validEvents = body.weddingEvents
+          .map((ev) => {
+            const parsedDateTime = typeof ev.dateTime === "string" ? parseWeddingEventDateTime(ev.dateTime) : null;
+            return {
+              ...ev,
+              parsedDateTime,
+            };
+          })
+          .filter((ev) => ev.type && ev.parsedDateTime);
+
         if (validEvents.length > 0) {
           await tx.weddingEvent.createMany({
             data: validEvents.map((ev) => ({
               weddingId: body.id,
               type: ev.type,
               title: typeof ev.title === "string" ? ev.title.trim() : ev.type,
-              dateTime: new Date(ev.dateTime),
+              dateTime: ev.parsedDateTime as Date,
               lunarDate: typeof ev.lunarDate === "string" ? ev.lunarDate.trim() : "",
               locationName: typeof ev.locationName === "string" ? ev.locationName.trim() : "",
               locationUrl: typeof ev.locationUrl === "string" ? ev.locationUrl.trim() : "",
@@ -423,7 +488,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: normalizedLoveStory.map((item, index) => ({
             weddingId: body.id,
             title: item.title,
-            eventDate: new Date(item.eventDate),
+            eventDate: parseDateOnlyValue(item.eventDate) as Date,
             description: item.description,
             image: item.image || "/images/gallery-1.jpg",
             order: item.order || index + 1,

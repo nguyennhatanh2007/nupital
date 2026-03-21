@@ -1,5 +1,6 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Head from "next/head";
+import Image from "next/image";
 import { useState } from "react";
 
 import { prisma } from "../lib/prisma";
@@ -56,6 +57,32 @@ type AdminWedding = {
 const MIN_GALLERY_SIZE = 6;
 const MAX_GALLERY_SIZE = 20;
 
+const VIETNAM_TZ = "Asia/Ho_Chi_Minh";
+
+function toDateTimeLocalValue(date: Date): string {
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: VIETNAM_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  // sv-SE outputs "YYYY-MM-DD HH:mm", datetime-local expects "YYYY-MM-DDTHH:mm"
+  return parts.replace(" ", "T");
+}
+
+function toDateOnlyValue(date: Date): string {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: VIETNAM_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 function normalizeGallerySlots(gallery: string[]): string[] {
   const cleaned = gallery.map((item) => item.trim()).filter(Boolean);
   if (cleaned.length > MAX_GALLERY_SIZE) {
@@ -104,7 +131,7 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
         brideBio: wedding.brideBio,
         groomName: wedding.groomName,
         groomBio: wedding.groomBio,
-        weddingDate: wedding.weddingDate.toISOString().slice(0, 10),
+        weddingDate: toDateOnlyValue(wedding.weddingDate),
         location: wedding.location,
         heroImage: wedding.heroImage,
         groomImage: wedding.groomImage,
@@ -125,7 +152,7 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
             .map((item) => ({
               id: item.id,
               title: item.title,
-              eventDate: item.eventDate.toISOString().slice(0, 10),
+              eventDate: toDateOnlyValue(item.eventDate),
               description: item.description,
               image: item.image,
               order: item.order,
@@ -135,7 +162,7 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
             items.push({
               id: -1,
               title: "",
-              eventDate: wedding.weddingDate.toISOString().slice(0, 10),
+              eventDate: toDateOnlyValue(wedding.weddingDate),
               description: "",
               image: "",
               order: items.length + 1,
@@ -148,7 +175,7 @@ export const getServerSideProps: GetServerSideProps<AdminPageProps> = async () =
           ? wedding.weddingEvents.map((ev) => ({
               type: ev.type,
               title: ev.title,
-              dateTime: ev.dateTime.toISOString().slice(0, 16),
+              dateTime: toDateTimeLocalValue(ev.dateTime),
               lunarDate: ev.lunarDate,
               locationName: ev.locationName,
               locationUrl: ev.locationUrl,
@@ -594,7 +621,18 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                   </div>
                   <div className={styles.galleryPreviewFrame}>
                     {imagePath ? (
-                      <img src={imagePath} alt={`Gallery slot ${index + 1}`} className={styles.galleryPreviewImage} />
+                      <div className={styles.galleryPreviewMedia}>
+                        <Image
+                          src={imagePath}
+                          alt={`Gallery slot ${index + 1}`}
+                          fill
+                          className={styles.galleryPreviewImage}
+                          sizes="(max-width: 767px) 45vw, (max-width: 1200px) 28vw, 220px"
+                          quality={45}
+                          loading="lazy"
+                          unoptimized={!imagePath.startsWith("/")}
+                        />
+                      </div>
                     ) : (
                       <span className={styles.galleryEmpty}>No image</span>
                     )}
