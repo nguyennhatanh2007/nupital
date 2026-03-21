@@ -194,6 +194,12 @@ function toDateTimeLocalValue(date: Date): string {
   return parts.replace(" ", "T");
 }
 
+function isReadonlyDatabaseError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error || "");
+  const normalized = message.toLowerCase();
+  return normalized.includes("readonly") || normalized.includes("read-only") || normalized.includes("attempt to write a readonly database");
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     try {
@@ -577,6 +583,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ message: "Wedding updated successfully." });
   } catch (error) {
     await serverLogger.error("API_WEDDING", "Failed to update wedding", error, { weddingId: body?.id });
+
+    if (isReadonlyDatabaseError(error)) {
+      await serverLogger.warn("API_WEDDING", "Database is read-only during update", { weddingId: body?.id });
+      return res.status(503).json({
+        code: "DB_READONLY",
+        message: "Database is currently read-only on server. Image file may upload successfully, but changes cannot be saved. Please fix VPS database write permission and retry.",
+      });
+    }
+
     return res.status(500).json({ message: "Failed to update wedding." });
   }
 }

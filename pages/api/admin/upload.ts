@@ -7,7 +7,7 @@ import jsQR from "jsqr";
 import { serverLogger } from "../../../lib/logger-server";
 
 const RESPONSIVE_WIDTHS = [768, 1440, 2200] as const;
-const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 40 * 1024 * 1024;
 const MAX_IMAGE_MEGAPIXELS = 20;
 const MAX_STORED_EDGE = 2400;
 const QR_DETECT_MAX_EDGE = 1600;
@@ -27,6 +27,7 @@ function parseForm(req: NextApiRequest): Promise<{ file: FormidableFile; filenam
     multiples: false,
     maxFiles: 1,
     maxFileSize: MAX_UPLOAD_BYTES,
+    maxTotalFileSize: MAX_UPLOAD_BYTES,
     keepExtensions: true,
   });
 
@@ -318,6 +319,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const maybeCode = (error as { code?: string | number } | undefined)?.code;
     const isTooLarge =
       message.toLowerCase().includes("maxfilesize") ||
+      message.toLowerCase().includes("maxtotalfilesize") ||
+      message.toLowerCase().includes("exceeded") ||
       message.toLowerCase().includes("max file size") ||
       maybeCode === 1009;
 
@@ -329,7 +332,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (isTooLarge) {
-      return res.status(413).json({ message: "File too large. Maximum allowed size is 20MB." });
+      return res.status(413).json({ message: "File too large. Maximum allowed size is 40MB." });
     }
 
     return res.status(500).json({ message: "Failed to save image." });

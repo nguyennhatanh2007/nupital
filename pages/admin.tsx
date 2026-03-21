@@ -386,8 +386,13 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
         }),
       });
 
-      const data = (await response.json()) as { message?: string };
+      const data = (await response.json()) as { message?: string; code?: string };
       if (!response.ok) {
+        if (data.code === "DB_READONLY") {
+          throw new Error(
+            "Upload succeeded but server database is read-only, so changes were not saved. Please fix VPS write permission for SQLite DB, then click Save Changes or re-upload."
+          );
+        }
         throw new Error(data.message || "Save failed.");
       }
 

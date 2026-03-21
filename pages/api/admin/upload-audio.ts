@@ -19,6 +19,7 @@ function parseForm(req: NextApiRequest): Promise<{ file: FormidableFile; filenam
     multiples: false,
     maxFiles: 1,
     maxFileSize: MAX_AUDIO_UPLOAD_BYTES,
+    maxTotalFileSize: MAX_AUDIO_UPLOAD_BYTES,
     keepExtensions: true,
   });
 
@@ -102,6 +103,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const maybeCode = (error as { code?: string | number } | undefined)?.code;
     const isTooLarge =
       message.toLowerCase().includes("maxfilesize") ||
+      message.toLowerCase().includes("maxtotalfilesize") ||
+      message.toLowerCase().includes("exceeded") ||
       message.toLowerCase().includes("max file size") ||
       maybeCode === 1009;
 
