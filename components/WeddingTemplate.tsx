@@ -2,6 +2,84 @@ import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import type { WeddingData } from "../lib/wedding-data";
 import { convertSolar2Lunar, getYearName } from "../lib/wedding-data";
+import { buildResponsiveImageSet } from "../lib/responsive-image";
+
+function BackgroundMusic({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.28;
+
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    const onError = () => setHasError(true);
+
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    audio.addEventListener("error", onError);
+
+    return () => {
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("error", onError);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (hasError) return;
+
+    const unlockAndPlay = () => {
+      const audio = audioRef.current;
+      if (!audio || isPlaying) return;
+      audio.play().catch(() => undefined);
+    };
+
+    window.addEventListener("click", unlockAndPlay, { once: true });
+    window.addEventListener("touchstart", unlockAndPlay, { once: true });
+
+    return () => {
+      window.removeEventListener("click", unlockAndPlay);
+      window.removeEventListener("touchstart", unlockAndPlay);
+    };
+  }, [hasError, isPlaying]);
+
+  const toggleMusic = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      return;
+    }
+
+    try {
+      await audio.play();
+    } catch {
+      setHasError(true);
+    }
+  };
+
+  return (
+    <>
+      <audio ref={audioRef} src={src} loop preload="metadata" />
+      <button
+        type="button"
+        className="luxe-music-toggle"
+        onClick={toggleMusic}
+        aria-label={isPlaying ? "Tắt nhạc nền" : "Bật nhạc nền"}
+      >
+        <span aria-hidden="true">♪</span>
+        <span>{isPlaying ? "Nhạc: Bật" : "Nhạc: Tắt"}</span>
+      </button>
+      {hasError ? <span className="luxe-music-hint">Chưa tìm thấy file nhạc tại /uploads/background-music.mp3</span> : null}
+    </>
+  );
+}
 
 function MessageForm() {
   const [name, setName] = useState("");
@@ -104,6 +182,7 @@ type WeddingTemplateProps = {
 
 export default function WeddingTemplate({ data }: WeddingTemplateProps) {
   const [visibleMilestones, setVisibleMilestones] = useState<Set<number>>(new Set());
+  const [isTimelineReady, setIsTimelineReady] = useState(false);
   const visibleRef = React.useRef<Set<number>>(new Set());
   const sortedWeddingEvents = [...data.weddingEvents].sort(
     (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
@@ -115,6 +194,25 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
   };
 
   useEffect(() => {
+    const items = document.querySelectorAll<HTMLElement>(".timeline-item");
+    if (!items.length) {
+      return;
+    }
+
+    setIsTimelineReady(true);
+
+    const showAllItems = () => {
+      const allVisible = new Set<number>();
+      items.forEach((_, idx) => allVisible.add(idx));
+      visibleRef.current = allVisible;
+      setVisibleMilestones(new Set(allVisible));
+    };
+
+    if (!("IntersectionObserver" in window)) {
+      showAllItems();
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         const visibleIndexes = visibleRef.current;
@@ -134,10 +232,17 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
       { threshold: 0.2 }
     );
 
-    const items = document.querySelectorAll<HTMLElement>(".timeline-item");
     items.forEach((item) => observer.observe(item));
 
+    // Fallback: if observer has not marked any item after initial render, reveal all.
+    const fallbackTimer = window.setTimeout(() => {
+      if (visibleRef.current.size === 0) {
+        showAllItems();
+      }
+    }, 1200);
+
     return () => {
+      window.clearTimeout(fallbackTimer);
       items.forEach((item) => observer.unobserve(item));
       observer.disconnect();
     };
@@ -370,7 +475,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                 <h2>Love Story Timeline</h2>
                 <p>Moments that shaped our journey together.</p>
               </div>
-              <div className="timeline">
+              <div className={`timeline ${isTimelineReady ? "timeline-ready" : ""}`}>
                 {data.storyMilestones.map((milestone, index) => {
                   const milestoneDate = new Date(milestone.date);
                   const statusClass = milestoneDate.getTime() < Date.now() ? "completed" : "upcoming";
@@ -379,7 +484,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
                   return (
                     <div
                       key={`${milestone.title}-${index}`}
-                      className={`timeline-item ${visibleMilestones.has(index) ? "visible" : ""} ${!isEven ? "right" : ""}`}
+                      className={`timeline-item ${isTimelineReady && visibleMilestones.has(index) ? "visible" : ""} ${!isEven ? "right" : ""}`}
                       data-timeline-index={index}
                     >
                       <div className={`timeline-marker ${statusClass}`} />
@@ -412,21 +517,35 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
             </div>
 
             <div className="wedding-gallery-grid">
-              {data.galleryImages.map((image, index) => (
-                <a className="wedding-gallery-thumb image-popup animate-box" href={image} key={`${image}-${index}`} data-mfp-src={image} data-title={`Photo ${index + 1}`}>
-                  <Image
-                    src={image}
-                    alt={`Wedding gallery ${index + 1}`}
-                    width={1000}
-                    height={1250}
-                    unoptimized
-                    quality={90}
-                    sizes="(max-width: 575px) 100vw, (max-width: 991px) 50vw, 33vw"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </a>
-              ))}
+              {data.galleryImages.map((image, index) => {
+                const responsiveSet = buildResponsiveImageSet(image);
+                const popupSrc = responsiveSet?.lightboxSrc || image;
+                return (
+                  <a className="wedding-gallery-thumb image-popup animate-box" href={popupSrc} key={`${image}-${index}`} data-mfp-src={popupSrc} data-title={`Photo ${index + 1}`}>
+                    {responsiveSet ? (
+                      <picture>
+                        <source type="image/avif" srcSet={responsiveSet.avifSrcSet} sizes="(max-width: 575px) 100vw, (max-width: 991px) 50vw, 33vw" />
+                        <source type="image/webp" srcSet={responsiveSet.webpSrcSet} sizes="(max-width: 575px) 100vw, (max-width: 991px) 50vw, 33vw" />
+                        <img
+                          src={responsiveSet.fallbackSrc}
+                          srcSet={responsiveSet.jpgSrcSet}
+                          sizes="(max-width: 575px) 100vw, (max-width: 991px) 50vw, 33vw"
+                          alt={`Wedding gallery ${index + 1}`}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </picture>
+                    ) : (
+                      <img
+                        src={image}
+                        alt={`Wedding gallery ${index + 1}`}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
+                  </a>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -522,6 +641,8 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
           </section>
         )}
       </main>
+
+        <BackgroundMusic src="/uploads/background-music.mp3" />
 
         <footer className="luxe-footer">
           <div className="container text-center">

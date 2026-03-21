@@ -253,28 +253,13 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const readerResult = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-          return;
-        }
-        reject(new Error("Could not read file."));
-      };
-      reader.onerror = () => reject(new Error("Could not read file."));
-      reader.readAsDataURL(file);
-    });
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("filename", file.name);
 
     const response = await fetch("/api/admin/upload", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        filename: file.name,
-        dataUrl: readerResult,
-      }),
+      body: formData,
     });
 
     const data = (await response.json()) as { path?: string; message?: string };

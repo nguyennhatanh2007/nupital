@@ -1273,18 +1273,28 @@ figure {
 
 .wedding-gallery-thumb {
   display: block;
+  position: relative;
+  aspect-ratio: 3 / 4;
   border-radius: 14px;
   overflow: hidden;
   background: #f7f3f3;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-.wedding-gallery-thumb img {
+.wedding-gallery-thumb picture {
   display: block;
   width: 100%;
-  aspect-ratio: 3 / 4;
-  max-height: 420px;
+  height: 100%;
+}
+
+.wedding-gallery-thumb img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none;
+  aspect-ratio: auto;
   object-fit: cover;
+  object-position: center;
   transition: transform 0.25s ease;
 }
 
@@ -1305,8 +1315,7 @@ figure {
   }
 
   .wedding-gallery-thumb img {
-    aspect-ratio: 3 / 4;
-    max-height: 360px;
+    max-height: none;
   }
 }
 
@@ -1419,8 +1428,32 @@ figure {
 
 /* Modern Minimal Luxe homepage */
 .luxe-page {
-  background: #fbf8f3;
+  background:
+    radial-gradient(1400px 520px at 12% -8%, rgba(236, 214, 202, 0.28), transparent 66%),
+    radial-gradient(1200px 520px at 92% 6%, rgba(244, 226, 214, 0.32), transparent 70%),
+    linear-gradient(180deg, #fffaf5 0%, #fdf6f0 36%, #fff9f4 68%, #fffdfb 100%);
   color: #5f5b57;
+  position: relative;
+}
+
+.luxe-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(rgba(178, 145, 120, 0.08) 0.6px, transparent 0.6px),
+    radial-gradient(rgba(208, 176, 154, 0.06) 0.6px, transparent 0.6px);
+  background-position: 0 0, 10px 10px;
+  background-size: 20px 20px;
+  opacity: 0.45;
+  z-index: 0;
+}
+
+.luxe-page > main,
+.luxe-page > footer {
+  position: relative;
+  z-index: 1;
 }
 
 .luxe-topbar {
@@ -1612,14 +1645,63 @@ figure {
 
 .luxe-section {
   padding: 55px 0;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
 }
 
 .luxe-section-cream {
-  background: #fbf8f3;
+  background: linear-gradient(180deg, rgba(255, 249, 243, 0.9) 0%, rgba(255, 245, 236, 0.82) 100%);
 }
 
 .luxe-section-white {
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 250, 245, 0.9) 100%);
+}
+
+.luxe-page main > .luxe-section:nth-of-type(odd) {
+  background: linear-gradient(180deg, rgba(255, 250, 245, 0.9) 0%, rgba(255, 244, 237, 0.8) 100%);
+}
+
+.luxe-page main > .luxe-section:nth-of-type(even) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 249, 243, 0.88) 100%);
+}
+
+.luxe-page main > .luxe-section::before {
+  content: "";
+  position: absolute;
+  width: min(44vw, 560px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(241, 216, 201, 0.34), rgba(241, 216, 201, 0));
+  filter: blur(2px);
+  z-index: -1;
+}
+
+.luxe-page main > .luxe-section:nth-of-type(odd)::before {
+  top: -120px;
+  right: -120px;
+}
+
+.luxe-page main > .luxe-section:nth-of-type(even)::before {
+  top: -110px;
+  left: -120px;
+}
+
+.luxe-page main > .luxe-section + .luxe-section::after {
+  content: "❦";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(185, 145, 119, 0.62);
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  background: linear-gradient(90deg, rgba(255, 249, 243, 0.95), rgba(255, 255, 255, 0.95));
+  border: 1px solid rgba(227, 205, 191, 0.72);
+  border-radius: 999px;
+  padding: 4px 14px;
+  box-shadow: 0 8px 20px rgba(137, 102, 81, 0.12);
 }
 
 .luxe-section-heading {
@@ -2214,7 +2296,7 @@ figure {
 }
 
 .luxe-rsvp-card {
-  max-width: 760px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 40px 36px;
   border-radius: 20px;
@@ -2239,6 +2321,20 @@ figure {
   overflow-x: auto;
   padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
+}
+
+@media screen and (min-width: 992px) {
+  .friend-messages-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    overflow: visible;
+  }
+
+  .friend-message-card {
+    min-width: 0;
+    max-width: none;
+  }
 }
 
 
@@ -2322,6 +2418,45 @@ figure {
   padding: 42px 0 54px;
   background: linear-gradient(180deg, #fffaf5 0%, #f3ece5 100%);
   border-top: 1px solid rgba(173, 144, 116, 0.2);
+}
+
+.luxe-music-toggle {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 85;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(214, 180, 159, 0.72);
+  background: rgba(255, 251, 246, 0.94);
+  color: #6a4e3f;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 24px rgba(134, 96, 76, 0.18);
+}
+
+.luxe-music-toggle:hover {
+  background: rgba(255, 246, 239, 0.98);
+  color: #5a4134;
+}
+
+.luxe-music-hint {
+  position: fixed;
+  right: 20px;
+  bottom: 62px;
+  z-index: 85;
+  max-width: 320px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(72, 50, 40, 0.88);
+  color: #fff9f3;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .luxe-footer-mark {
@@ -2681,14 +2816,38 @@ a.luxe-schedule-location:hover {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  opacity: 0;
-  transform: translateX(-30px);
-  transition: opacity 520ms ease, transform 520ms ease;
-}
-
-.timeline-item.visible {
   opacity: 1;
   transform: translateX(0);
+}
+
+.timeline.timeline-ready .timeline-item.visible {
+  animation: timelineRevealLeft 520ms ease both;
+}
+
+.timeline.timeline-ready .timeline-item.right.visible {
+  animation-name: timelineRevealRight;
+}
+
+@keyframes timelineRevealLeft {
+  from {
+    opacity: 0.55;
+    transform: translateX(-22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes timelineRevealRight {
+  from {
+    opacity: 0.55;
+    transform: translateX(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .timeline-item.right {
@@ -2832,6 +2991,22 @@ a.luxe-schedule-location:hover {
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(242, 225, 221, 0.7);
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .timeline.timeline-ready .timeline-item.visible,
+  .timeline.timeline-ready .timeline-item.right.visible {
+    animation: timelineRevealMobile 460ms ease both;
+  }
+
+  @keyframes timelineRevealMobile {
+    from {
+      opacity: 0.65;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .timeline-item.right {

@@ -1,6 +1,90 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { promises as fs } from "fs";
+import path from "path";
 
 import { prisma } from "../../../lib/prisma";
+
+const UPLOAD_PREFIX = "/uploads/";
+
+type WeddingSnapshot = {
+  heroImage: string;
+  groomImage: string;
+  brideImage: string;
+  gallery: unknown;
+  loveStory: Array<{ image: string }>;
+  bankQrInfo: {
+    qrImage: string | null;
+    groomQrImage: string | null;
+    brideQrImage: string | null;
+  } | null;
+};
+
+function normalizeUploadPath(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  if (!trimmed.startsWith(UPLOAD_PREFIX)) return null;
+  return trimmed;
+}
+
+function collectUploadPaths(snapshot: WeddingSnapshot | null): Set<string> {
+  const paths = new Set<string>();
+  if (!snapshot) return paths;
+
+  const addIfUpload = (value: unknown) => {
+    const normalized = normalizeUploadPath(value);
+    if (normalized) paths.add(normalized);
+  };
+
+  addIfUpload(snapshot.heroImage);
+  addIfUpload(snapshot.groomImage);
+  addIfUpload(snapshot.brideImage);
+
+  if (Array.isArray(snapshot.gallery)) {
+    snapshot.gallery.forEach((item) => addIfUpload(item));
+  }
+
+  snapshot.loveStory.forEach((item) => addIfUpload(item.image));
+
+  if (snapshot.bankQrInfo) {
+    addIfUpload(snapshot.bankQrInfo.qrImage);
+    addIfUpload(snapshot.bankQrInfo.groomQrImage);
+    addIfUpload(snapshot.bankQrInfo.brideQrImage);
+  }
+
+  return paths;
+}
+
+async function cleanupRemovedUploads(removedPaths: Set<string>) {
+  if (!removedPaths.size) return;
+
+  const uploadsDir = path.join(process.cwd(), "public", "uploads");
+  let fileNames: string[] = [];
+  try {
+    fileNames = await fs.readdir(uploadsDir);
+  } catch {
+    return;
+  }
+
+  for (const uploadPath of removedPaths) {
+    const relative = uploadPath.slice(UPLOAD_PREFIX.length);
+    const fullPath = path.join(uploadsDir, relative);
+
+    const match = relative.match(/^(.*)-orig\.(jpg|jpeg|png|webp|avif)$/i);
+    if (!match) {
+      await fs.unlink(fullPath).catch(() => undefined);
+      continue;
+    }
+
+    const base = match[1];
+    const variantCandidates = fileNames.filter(
+      (name) => name === relative || name.startsWith(`${base}-w`) || name.startsWith(`${base}-orig.`)
+    );
+
+    await Promise.all(
+      variantCandidates.map((name) => fs.unlink(path.join(uploadsDir, name)).catch(() => undefined))
+    );
+  }
+}
 
 type WeddingEventInput = {
   type: string;
@@ -110,6 +194,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const beforeUpdate = await prisma.wedding.findUnique({
+      where: { id: body.id },
+      select: {
+        heroImage: true,
+        groomImage: true,
+        brideImage: true,
+        gallery: true,
+        loveStory: {
+          select: {
+            image: true,
+          },
+        },
+        bankQrInfo: {
+          select: {
+            qrImage: true,
+            groomQrImage: true,
+            brideQrImage: true,
+          },
+        },
+      },
+    });
+
+    if (!beforeUpdate) {
+      return res.status(404).json({ message: "Wedding record not found." });
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.wedding.update({
         where: { id: body.id },
@@ -220,6 +330,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
     });
+
+    const afterUpdate = await prisma.wedding.findUnique({
+      where: { id: body.id },
+      select: {
+        heroImage: true,
+        groomImage: true,
+        brideImage: true,
+        gallery: true,
+        loveStory: {
+          select: {
+            image: true,
+          },
+        },
+        bankQrInfo: {
+          select: {
+            qrImage: true,
+            groomQrImage: true,
+            brideQrImage: true,
+          },
+        },
+      },
+    });
+
+    const oldPaths = collectUploadPaths(beforeUpdate);
+    const newPaths = collectUploadPaths(afterUpdate);
+    const removed = new Set<string>();
+    oldPaths.forEach((item) => {
+      if (!newPaths.has(item)) {
+        removed.add(item);
+      }
+    });
+
+    await cleanupRemovedUploads(removed);
 
     return res.status(200).json({ message: "Wedding updated successfully." });
   } catch (error) {
