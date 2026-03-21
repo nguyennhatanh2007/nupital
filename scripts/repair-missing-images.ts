@@ -13,6 +13,12 @@ function publicPathExists(projectRoot: string, value: string | null | undefined)
 }
 
 async function backupDb(projectRoot: string) {
+  const databaseUrl = process.env.DATABASE_URL || "";
+  if (!databaseUrl.startsWith("file:")) {
+    console.log("[backup] skipped (DATABASE_URL is not SQLite)");
+    return;
+  }
+
   const candidates = [
     path.join(projectRoot, "prisma", "dev.db"),
     path.join(projectRoot, "prisma", "prisma", "dev.db"),

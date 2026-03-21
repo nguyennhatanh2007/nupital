@@ -4,7 +4,7 @@ import path from "path";
 import { prisma } from "../lib/prisma";
 import { normalizeUploadPath } from "../lib/wedding-data";
 
-async function resolveDbPath(projectRoot: string): Promise<string> {
+async function resolveSqliteDbPath(projectRoot: string): Promise<string> {
   const candidates = [
     path.join(projectRoot, "prisma", "dev.db"),
     path.join(projectRoot, "prisma", "prisma", "dev.db"),
@@ -23,14 +23,24 @@ async function resolveDbPath(projectRoot: string): Promise<string> {
   throw new Error(`Unable to locate SQLite database. Checked: ${candidates.join(", ")}`);
 }
 
-async function main() {
-  const projectRoot = process.cwd();
-  const dbPath = await resolveDbPath(projectRoot);
+async function backupSqliteIfNeeded(projectRoot: string) {
+  const databaseUrl = process.env.DATABASE_URL || "";
+  if (!databaseUrl.startsWith("file:")) {
+    console.log("[backup] skipped (DATABASE_URL is not SQLite)");
+    return;
+  }
+
+  const dbPath = await resolveSqliteDbPath(projectRoot);
   const backupDir = path.join(projectRoot, "backups", "normalize-upload-paths", new Date().toISOString().replace(/[:.]/g, "-"));
 
   await fs.mkdir(backupDir, { recursive: true });
   await fs.copyFile(dbPath, path.join(backupDir, "dev.db"));
   console.log(`[backup] ${dbPath} -> ${path.join(backupDir, "dev.db")}`);
+}
+
+async function main() {
+  const projectRoot = process.cwd();
+  await backupSqliteIfNeeded(projectRoot);
 
   const weddings = await prisma.wedding.findMany({
     include: {
