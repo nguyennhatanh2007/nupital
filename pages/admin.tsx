@@ -311,6 +311,27 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     };
   };
 
+  const uploadBackgroundMusic = async (file: File): Promise<{ path: string; message?: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("filename", file.name);
+
+    const response = await fetch("/api/admin/upload-audio", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = (await response.json()) as { path?: string; message?: string };
+    if (!response.ok || !data.path) {
+      throw new Error(data.message || "Upload failed.");
+    }
+
+    return {
+      path: data.path,
+      message: data.message,
+    };
+  };
+
   const buildPayloadToSave = (current: AdminWedding): AdminWedding => {
     const ceremonyEvent = current.weddingEvents.find((ev) => ev.type === "CEREMONY") || current.weddingEvents[0];
     return {
@@ -430,6 +451,31 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
           text: `${cropNote} Decoded QR content: ${qrSnippet}`,
         });
       }
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Upload failed." });
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
+  const handleBackgroundMusicUpload = async (file?: File | null) => {
+    if (!file) return;
+
+    const filename = file.name.toLowerCase();
+    if (!filename.endsWith(".mp3")) {
+      setMessage({ type: "error", text: "Only .mp3 files are supported for background music." });
+      return;
+    }
+
+    setUploadingField("background-music");
+    setMessage(null);
+
+    try {
+      const uploadResult = await uploadBackgroundMusic(file);
+      setMessage({
+        type: "success",
+        text: `${uploadResult.message || "Background music uploaded."} Website will use ${uploadResult.path}.`,
+      });
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Upload failed." });
     } finally {
@@ -629,6 +675,26 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                     />
                   </label>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>Background Music</h2>
+            <p className={styles.helper}>Upload one MP3 file to replace website background music at /uploads/background-music.mp3.</p>
+            <div className={styles.field}>
+              <label>Background Music (MP3)</label>
+              <div className={styles.imageFieldRow}>
+                <input className="form-control" value="/uploads/background-music.mp3" readOnly />
+                <label className={styles.uploadButton}>
+                  Upload MP3
+                  <input
+                    type="file"
+                    accept="audio/mpeg,.mp3"
+                    hidden
+                    onChange={(e) => handleBackgroundMusicUpload(e.target.files?.[0])}
+                  />
+                </label>
               </div>
             </div>
           </section>
