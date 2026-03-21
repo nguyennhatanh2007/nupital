@@ -1916,6 +1916,7 @@ figure {
   grid-template-columns: 1fr auto auto 1fr;
   gap: 16px;
   align-items: center;
+  overflow: hidden;
 }
 
 .luxe-qr-side {
@@ -1925,6 +1926,7 @@ figure {
   align-items: center;
   justify-content: center;
   text-align: center;
+  min-width: 0;
 }
 
 .luxe-qr-side span {
@@ -1939,8 +1941,9 @@ figure {
   color: #4b3732;
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 32px;
-  line-height: 1;
+  line-height: 1.1;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .luxe-qr-side-line {
@@ -1949,6 +1952,9 @@ figure {
   font-size: 13px;
   color: #7e655c;
   line-height: 1.45;
+  max-width: 24ch;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .luxe-qr-note-wrap {
@@ -2085,6 +2091,7 @@ figure {
 
   .luxe-qr-side-line {
     font-size: 12px;
+    max-width: 20ch;
   }
 
   .luxe-qr-frame-compact {
@@ -2099,6 +2106,35 @@ figure {
 
   .luxe-qr-fake {
     width: 160px;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .luxe-qr-strip {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "left"
+      "groom"
+      "right"
+      "bride";
+    justify-items: center;
+    gap: 10px;
+    padding: 16px 12px;
+    border-radius: 22px;
+  }
+
+  .luxe-qr-side {
+    width: 100%;
+  }
+
+  .luxe-qr-side strong {
+    font-size: 22px;
+  }
+
+  .luxe-qr-frame-compact {
+    width: min(100%, 260px);
+    min-height: 170px;
+    padding: 12px;
   }
 }
 

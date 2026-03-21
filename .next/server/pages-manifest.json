@@ -3,8 +3,8 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/admin": "pages/admin.js",
   "/api/messages": "pages/api/messages.js",
+  "/admin": "pages/admin.js",
   "/api/admin/upload": "pages/api/admin/upload.js",
   "/api/admin/wedding": "pages/api/admin/wedding.js"
 }

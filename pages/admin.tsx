@@ -280,22 +280,30 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     });
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = async (
+    file: File,
+    purpose: "image" | "qr" = "image"
+  ): Promise<{ path: string; qrText?: string; qrCropped?: boolean }> => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("filename", file.name);
+    formData.append("purpose", purpose);
 
     const response = await fetch("/api/admin/upload", {
       method: "POST",
       body: formData,
     });
 
-    const data = (await response.json()) as { path?: string; message?: string };
+    const data = (await response.json()) as { path?: string; message?: string; qrText?: string; qrCropped?: boolean };
     if (!response.ok || !data.path) {
       throw new Error(data.message || "Upload failed.");
     }
 
-    return data.path;
+    return {
+      path: data.path,
+      qrText: data.qrText,
+      qrCropped: data.qrCropped,
+    };
   };
 
   const buildPayloadToSave = (current: AdminWedding): AdminWedding => {
@@ -394,10 +402,22 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     setMessage(null);
 
     try {
-      const path = await uploadImage(file);
-      const nextForm = applyPathUpdate(form, path);
+      const uploadPurpose = fieldKey.includes("bankQr") ? "qr" : "image";
+      const uploadResult = await uploadImage(file, uploadPurpose);
+      const nextForm = applyPathUpdate(form, uploadResult.path);
       setForm(nextForm);
-      await persistWedding(nextForm, "upload");
+      const saved = await persistWedding(nextForm, "upload");
+
+      if (saved && uploadResult.qrText) {
+        const qrSnippet = uploadResult.qrText.length > 120
+          ? `${uploadResult.qrText.slice(0, 120)}...`
+          : uploadResult.qrText;
+        const cropNote = uploadResult.qrCropped ? "QR image was auto-cropped to square." : "QR image kept original framing.";
+        setMessage({
+          type: "success",
+          text: `${cropNote} Decoded QR content: ${qrSnippet}`,
+        });
+      }
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Upload failed." });
     } finally {
