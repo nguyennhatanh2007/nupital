@@ -92,15 +92,15 @@ export function mapWeddingToWeddingData(wedding: WeddingWithStory): WeddingData 
           bankName: wedding.bankQrInfo.bankName,
           accountNumber: wedding.bankQrInfo.accountNumber,
           ownerName: wedding.bankQrInfo.ownerName,
-          qrImage: wedding.bankQrInfo.qrImage,
+          qrImage: normalizeUploadPath(wedding.bankQrInfo.qrImage),
           groomBankName: wedding.bankQrInfo.groomBankName,
           groomAccountNumber: wedding.bankQrInfo.groomAccountNumber,
           groomOwnerName: wedding.bankQrInfo.groomOwnerName,
-          groomQrImage: wedding.bankQrInfo.groomQrImage,
+          groomQrImage: normalizeUploadPath(wedding.bankQrInfo.groomQrImage),
           brideBankName: wedding.bankQrInfo.brideBankName,
           brideAccountNumber: wedding.bankQrInfo.brideAccountNumber,
           brideOwnerName: wedding.bankQrInfo.brideOwnerName,
-          brideQrImage: wedding.bankQrInfo.brideQrImage,
+          brideQrImage: normalizeUploadPath(wedding.bankQrInfo.brideQrImage),
         }
       : undefined,
     weddingEvents: wedding.weddingEvents.map((e) => {
