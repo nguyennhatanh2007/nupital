@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 
 import { prisma } from "../../../lib/prisma";
+import { serverLogger } from "../../../lib/logger-server";
 
 const UPLOAD_PREFIX = "/uploads/";
 
@@ -134,15 +135,95 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === "GET") {
+    try {
+      const id = req.query.id ? Number(req.query.id) : null;
+      await serverLogger.apiRequest(`/api/admin/wedding?id=${id}`, "GET");
+
+      if (!id) {
+        await serverLogger.warn("API_WEDDING", "GET request missing ID", { query: req.query });
+        return res.status(400).json({ message: "Missing wedding ID" });
+      }
+
+      const wedding = await prisma.wedding.findUnique({
+        where: { id },
+        include: {
+          loveStory: { orderBy: { order: "asc" } },
+          bankQrInfo: true,
+          weddingEvents: true,
+        },
+      });
+
+      if (!wedding) {
+        await serverLogger.warn("API_WEDDING", "Wedding not found", { id });
+        return res.status(404).json({ message: "Wedding not found" });
+      }
+
+      // Map to AdminWedding format matching admin form
+      const gallery = Array.isArray(wedding.gallery)
+        ? wedding.gallery.filter((item): item is string => typeof item === "string")
+        : [];
+
+      const adminWedding = {
+        id: wedding.id,
+        brideName: wedding.brideName,
+        brideBio: wedding.brideBio,
+        groomName: wedding.groomName,
+        groomBio: wedding.groomBio,
+        weddingDate: wedding.weddingDate.toISOString().slice(0, 10),
+        location: wedding.location,
+        heroImage: wedding.heroImage,
+        groomImage: wedding.groomImage,
+        brideImage: wedding.brideImage,
+        bankQrGroomBankName: wedding.bankQrInfo?.groomBankName || wedding.bankQrInfo?.bankName || "",
+        bankQrGroomAccountNumber: wedding.bankQrInfo?.groomAccountNumber || wedding.bankQrInfo?.accountNumber || "",
+        bankQrGroomOwnerName: wedding.bankQrInfo?.groomOwnerName || wedding.groomName,
+        bankQrGroomImage: wedding.bankQrInfo?.groomQrImage || wedding.bankQrInfo?.qrImage || "",
+        bankQrBrideBankName: wedding.bankQrInfo?.brideBankName || wedding.bankQrInfo?.bankName || "",
+        bankQrBrideAccountNumber: wedding.bankQrInfo?.brideAccountNumber || wedding.bankQrInfo?.accountNumber || "",
+        bankQrBrideOwnerName: wedding.bankQrInfo?.brideOwnerName || wedding.brideName,
+        bankQrBrideImage: wedding.bankQrInfo?.brideQrImage || wedding.bankQrInfo?.qrImage || "",
+        gallery,
+        loveStory: wedding.loveStory.map((item) => ({
+          id: item.id,
+          title: item.title,
+          eventDate: item.eventDate.toISOString().slice(0, 10),
+          description: item.description,
+          image: item.image,
+          order: item.order,
+        })),
+        weddingEvents: wedding.weddingEvents.map((ev) => ({
+          type: ev.type,
+          title: ev.title,
+          dateTime: ev.dateTime.toISOString().slice(0, 16),
+          lunarDate: ev.lunarDate,
+          locationName: ev.locationName,
+          locationUrl: ev.locationUrl,
+        })),
+      };
+
+      await serverLogger.apiResponse("/api/admin/wedding", 200, 0);
+      await serverLogger.info("API_WEDDING", "Wedding data retrieved", {
+        id,
+        groomName: wedding.groomName,
+        brideName: wedding.brideName,
+        galleryCount: gallery.length,
+      });
+
+      return res.status(200).json({ ok: true, wedding: adminWedding });
+    } catch (error) {
+      await serverLogger.error("API_WEDDING", "Error fetching wedding", error);
+      return res.status(500).json({ message: "Failed to fetch wedding" });
+    }
+  }
+
   if (req.method !== "PUT") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
   const body = req.body as UpdateWeddingBody;
 
-  if (!body || typeof body !== "object") {
-    return res.status(400).json({ message: "Invalid payload." });
-  }
+  await serverLogger.apiRequest("/api/admin/wedding", "PUT", { weddingId: body?.id });
 
   if (
     !Number.isInteger(body.id) ||
@@ -156,11 +237,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     !Array.isArray(body.gallery) ||
     !Array.isArray(body.loveStory)
   ) {
+    await serverLogger.warn("API_WEDDING", "PUT validation failed - missing required fields", { weddingId: body?.id });
     return res.status(400).json({ message: "Missing required fields." });
   }
 
   const parsedWeddingDate = new Date(body.weddingDate);
   if (Number.isNaN(parsedWeddingDate.getTime())) {
+    await serverLogger.warn("API_WEDDING", "PUT validation failed - invalid weddingDate", {
+      weddingId: body.id,
+      weddingDate: body.weddingDate,
+    });
     return res.status(400).json({ message: "Invalid weddingDate." });
   }
 
@@ -190,8 +276,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .filter(Boolean);
 
   if (normalizedGallery.length < MIN_GALLERY_SIZE || normalizedGallery.length > MAX_GALLERY_SIZE) {
+    await serverLogger.warn("API_WEDDING", "PUT validation failed - invalid gallery size", {
+      weddingId: body.id,
+      galleryCount: normalizedGallery.length,
+      min: MIN_GALLERY_SIZE,
+      max: MAX_GALLERY_SIZE,
+    });
     return res.status(400).json({ message: `Gallery must contain between ${MIN_GALLERY_SIZE} and ${MAX_GALLERY_SIZE} images.` });
   }
+
+  await serverLogger.debug("API_WEDDING", "Starting database transaction", {
+    weddingId: body.id,
+    groomName: body.groomName,
+    brideName: body.brideName,
+    galleryCount: normalizedGallery.length,
+  });
 
   try {
     const beforeUpdate = await prisma.wedding.findUnique({
@@ -246,6 +345,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const brideAccountNumber = typeof body.bankQrInfo.brideAccountNumber === "string" ? body.bankQrInfo.brideAccountNumber.trim() : "";
           const brideOwnerName = typeof body.bankQrInfo.brideOwnerName === "string" ? body.bankQrInfo.brideOwnerName.trim() : "";
           const brideQrImage = typeof body.bankQrInfo.brideQrImage === "string" ? body.bankQrInfo.brideQrImage.trim() : "";
+
+          console.log("[API] Processing bankQrInfo - groomBankName:", groomBankName, "brideBankName:", brideBankName);
 
           const existing = await tx.bankQrInfo.findUnique({ where: { weddingId: body.id } });
 
@@ -364,9 +465,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await cleanupRemovedUploads(removed);
 
+    await serverLogger.info("API_WEDDING", "Wedding updated successfully", {
+      weddingId: body.id,
+      groomName: body.groomName,
+      brideName: body.brideName,
+    });
+    await serverLogger.apiResponse("/api/admin/wedding", 200, 0);
+
     return res.status(200).json({ message: "Wedding updated successfully." });
   } catch (error) {
-    console.error(error);
+    await serverLogger.error("API_WEDDING", "Failed to update wedding", error, { weddingId: body?.id });
     return res.status(500).json({ message: "Failed to update wedding." });
   }
 }

@@ -270,16 +270,106 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
     return data.path;
   };
 
-  const handleUpload = async (fieldKey: string, onPath: (path: string) => void, file?: File | null) => {
-    if (!file) return;
+  const buildPayloadToSave = (current: AdminWedding): AdminWedding => {
+    const ceremonyEvent = current.weddingEvents.find((ev) => ev.type === "CEREMONY") || current.weddingEvents[0];
+    return {
+      ...current,
+      weddingDate: ceremonyEvent?.dateTime ? ceremonyEvent.dateTime.slice(0, 10) : current.weddingDate,
+      location: ceremonyEvent?.locationName?.trim() ? ceremonyEvent.locationName.trim() : current.location,
+    };
+  };
+
+  const persistWedding = async (current: AdminWedding, source: "manual" | "upload"): Promise<boolean> => {
+    const payloadToSave = buildPayloadToSave(current);
+    const validationIssues = validate(payloadToSave);
+    setErrors(validationIssues);
+    if (validationIssues.length > 0) {
+      setMessage({
+        type: "error",
+        text:
+          source === "upload"
+            ? "Image uploaded but auto-save failed. Please fix form errors, then click Save Changes."
+            : "Please fix form errors before saving.",
+      });
+      return false;
+    }
+
+    setIsSaving(true);
+    if (source === "manual") setMessage(null);
+
+    try {
+      const normalizedGallery = normalizeGallerySlots(payloadToSave.gallery);
+
+      const response = await fetch("/api/admin/wedding", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...payloadToSave,
+          gallery: normalizedGallery.map((item) => item.trim()).filter(Boolean),
+          loveStory: payloadToSave.loveStory.map((item, index) => ({ ...item, order: index + 1 })),
+          weddingEvents: payloadToSave.weddingEvents,
+          bankQrInfo: {
+            groomBankName: payloadToSave.bankQrGroomBankName,
+            groomAccountNumber: payloadToSave.bankQrGroomAccountNumber,
+            groomOwnerName: payloadToSave.bankQrGroomOwnerName,
+            groomQrImage: payloadToSave.bankQrGroomImage,
+            brideBankName: payloadToSave.bankQrBrideBankName,
+            brideAccountNumber: payloadToSave.bankQrBrideAccountNumber,
+            brideOwnerName: payloadToSave.bankQrBrideOwnerName,
+            brideQrImage: payloadToSave.bankQrBrideImage,
+          },
+        }),
+      });
+
+      const data = (await response.json()) as { message?: string };
+      if (!response.ok) {
+        throw new Error(data.message || "Save failed.");
+      }
+
+      setMessage({
+        type: "success",
+        text: source === "upload" ? "Image uploaded and auto-saved successfully." : "Saved successfully.",
+      });
+
+      // Reload wedding data from server to sync form state
+      try {
+        const freshDataResponse = await fetch("/api/admin/wedding?id=" + current.id);
+        if (freshDataResponse.ok) {
+          const freshData = (await freshDataResponse.json()) as { wedding?: AdminWedding };
+          if (freshData.wedding) {
+            setForm(freshData.wedding);
+          }
+        }
+      } catch (reloadError) {
+        // Silently fail - user can manually refresh if needed
+      }
+
+      return true;
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Save failed." });
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpload = async (
+    fieldKey: string,
+    applyPathUpdate: (current: AdminWedding, path: string) => AdminWedding,
+    file?: File | null
+  ) => {
+    if (!file || !form) return;
 
     setUploadingField(fieldKey);
     setMessage(null);
 
     try {
       const path = await uploadImage(file);
-      onPath(path);
-      setMessage({ type: "success", text: "Image uploaded successfully." });
+      const nextForm = applyPathUpdate(form, path);
+      setForm(nextForm);
+      await persistWedding(nextForm, "upload");
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Upload failed." });
     } finally {
@@ -321,54 +411,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form) return;
-
-    const validationIssues = validate(form);
-    setErrors(validationIssues);
-    if (validationIssues.length > 0) {
-      setMessage({ type: "error", text: "Please fix form errors before saving." });
-      return;
-    }
-
-    setIsSaving(true);
-    setMessage(null);
-
-    try {
-      const normalizedGallery = normalizeGallerySlots(form.gallery);
-
-      const response = await fetch("/api/admin/wedding", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...form,
-          gallery: normalizedGallery.map((item) => item.trim()).filter(Boolean),
-          loveStory: form.loveStory.map((item, index) => ({ ...item, order: index + 1 })),
-          weddingEvents: form.weddingEvents,
-          bankQrInfo: {
-            groomBankName: form.bankQrGroomBankName,
-            groomAccountNumber: form.bankQrGroomAccountNumber,
-            groomOwnerName: form.bankQrGroomOwnerName,
-            groomQrImage: form.bankQrGroomImage,
-            brideBankName: form.bankQrBrideBankName,
-            brideAccountNumber: form.bankQrBrideAccountNumber,
-            brideOwnerName: form.bankQrBrideOwnerName,
-            brideQrImage: form.bankQrBrideImage,
-          },
-        }),
-      });
-
-      const data = (await response.json()) as { message?: string };
-      if (!response.ok) {
-        throw new Error(data.message || "Save failed.");
-      }
-
-      setMessage({ type: "success", text: "Saved successfully." });
-    } catch (error) {
-      setMessage({ type: "error", text: error instanceof Error ? error.message : "Save failed." });
-    } finally {
-      setIsSaving(false);
-    }
+    await persistWedding(form, "manual");
   };
 
   return (
@@ -458,30 +501,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
               </div>
             </div>
 
-            <div className={styles.gridDateLocation}>
-              <div className={styles.field}>
-                <label htmlFor="weddingDate">Wedding Date</label>
-                <input
-                  id="weddingDate"
-                  type="date"
-                  className="form-control"
-                  value={form.weddingDate}
-                  onChange={(e) => updateField("weddingDate", e.target.value)}
-                  required
-                />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="location">Location</label>
-                <input
-                  id="location"
-                  className="form-control"
-                  value={form.location}
-                  onChange={(e) => updateField("location", e.target.value)}
-                  placeholder="City, Venue"
-                  required
-                />
-              </div>
-            </div>
+            <p className={styles.helper}>Wedding Date và Location được lấy từ sự kiện CEREMONY trong phần Wedding Events để tránh trùng lặp.</p>
           </section>
 
           <section className={styles.card}>
@@ -502,7 +522,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                     type="file"
                     accept="image/*"
                     hidden
-                    onChange={(e) => handleUpload("heroImage", (path) => updateField("heroImage", path), e.target.files?.[0])}
+                      onChange={(e) => handleUpload("heroImage", (current, path) => ({ ...current, heroImage: path }), e.target.files?.[0])}
                   />
                 </label>
               </div>
@@ -524,7 +544,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                       type="file"
                       accept="image/*"
                       hidden
-                      onChange={(e) => handleUpload("groomImage", (path) => updateField("groomImage", path), e.target.files?.[0])}
+                      onChange={(e) => handleUpload("groomImage", (current, path) => ({ ...current, groomImage: path }), e.target.files?.[0])}
                     />
                   </label>
                 </div>
@@ -545,7 +565,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                       type="file"
                       accept="image/*"
                       hidden
-                      onChange={(e) => handleUpload("brideImage", (path) => updateField("brideImage", path), e.target.files?.[0])}
+                      onChange={(e) => handleUpload("brideImage", (current, path) => ({ ...current, brideImage: path }), e.target.files?.[0])}
                     />
                   </label>
                 </div>
@@ -590,10 +610,10 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                         onChange={(e) =>
                           handleUpload(
                             `gallery-${index + 1}`,
-                            (path) => {
-                              const next = [...form.gallery];
+                            (current, path) => {
+                              const next = [...current.gallery];
                               next[index] = path;
-                              updateField("gallery", next);
+                              return { ...current, gallery: next };
                             },
                             e.target.files?.[0]
                           )
@@ -656,7 +676,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                       type="file"
                       accept="image/*"
                       hidden
-                      onChange={(e) => handleUpload("bankQrGroomImage", (path) => updateBankQrField("bankQrGroomImage", path), e.target.files?.[0])}
+                      onChange={(e) => handleUpload("bankQrGroomImage", (current, path) => ({ ...current, bankQrGroomImage: path }), e.target.files?.[0])}
                     />
                   </label>
                 </div>
@@ -704,7 +724,7 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                       type="file"
                       accept="image/*"
                       hidden
-                      onChange={(e) => handleUpload("bankQrBrideImage", (path) => updateBankQrField("bankQrBrideImage", path), e.target.files?.[0])}
+                      onChange={(e) => handleUpload("bankQrBrideImage", (current, path) => ({ ...current, bankQrBrideImage: path }), e.target.files?.[0])}
                     />
                   </label>
                 </div>
@@ -831,7 +851,11 @@ export default function AdminPage({ wedding }: InferGetServerSidePropsType<typeo
                           onChange={(e) =>
                             handleUpload(
                               `milestone-${index}`,
-                              (path) => updateMilestone(index, "image", path),
+                              (current, path) => {
+                                const nextLoveStory = [...current.loveStory];
+                                nextLoveStory[index] = { ...nextLoveStory[index], image: path };
+                                return { ...current, loveStory: nextLoveStory };
+                              },
                               e.target.files?.[0]
                             )
                           }

@@ -3,8 +3,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import formidable, { type File as FormidableFile } from "formidable";
 import sharp from "sharp";
+import { serverLogger } from "../../../lib/logger-server";
 
-const RESPONSIVE_WIDTHS = [480, 768, 1080, 1440, 2200] as const;
+const RESPONSIVE_WIDTHS = [768, 1440, 2200] as const;
 const MAX_UPLOAD_BYTES = 30 * 1024 * 1024;
 
 export const config = {
@@ -70,10 +71,6 @@ async function createVariantSet(inputBuffer: Buffer, outputDir: string, baseName
     return [
       resized
         .clone()
-        .avif({ quality: 62, effort: 5 })
-        .toFile(path.join(outputDir, `${baseName}-w${width}.avif`)),
-      resized
-        .clone()
         .webp({ quality: 82, effort: 5 })
         .toFile(path.join(outputDir, `${baseName}-w${width}.webp`)),
       resized
@@ -88,12 +85,19 @@ async function createVariantSet(inputBuffer: Buffer, outputDir: string, baseName
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
+    await serverLogger.warn("API_UPLOAD", "Invalid method", { method: req.method });
     return res.status(405).json({ message: "Method not allowed" });
   }
 
+  const uploadStartTime = performance.now();
+  await serverLogger.apiRequest("/api/admin/upload", "POST");
+
   try {
     const { file, filename } = await parseForm(req);
+    await serverLogger.debug("API_UPLOAD", "File parsed", { filename, mimeType: file.mimetype, fileSize: file.size });
+
     if (!file.mimetype || !file.mimetype.startsWith("image/")) {
+      await serverLogger.warn("API_UPLOAD", "Invalid file type", { mimeType: file.mimetype, filename });
       return res.status(400).json({ message: "Only image uploads are supported." });
     }
 
@@ -104,8 +108,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const safeName = filename ? toSafeName(filename.replace(/\.[^/.]+$/, "")) : "upload";
     const baseName = `${Date.now()}-${safeName}`;
 
-    await createVariantSet(buffer, uploadDir, baseName);
-
     const originalPath = path.join(uploadDir, `${baseName}-orig.jpg`);
     await sharp(buffer, { failOn: "none" })
       .rotate()
@@ -114,9 +116,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await fs.unlink(file.filepath).catch(() => undefined);
 
-    return res.status(200).json({ path: `/uploads/${baseName}-orig.jpg` });
+    const uploadedPath = `/uploads/${baseName}-orig.jpg`;
+    const uploadDuration = performance.now() - uploadStartTime;
+
+    await serverLogger.apiResponse("/api/admin/upload", 200, Math.round(uploadDuration));
+    await serverLogger.info("API_UPLOAD", "Upload successful", {
+      originalFilename: filename,
+      uploadedPath: uploadedPath,
+      fileSize: buffer.length,
+      duration: Math.round(uploadDuration),
+      variants: "scheduled",
+    });
+
+    // Return early so admin upload is fast; responsive variants are generated in the background.
+    res.status(200).json({ path: uploadedPath });
+
+    void (async () => {
+      const variantStartTime = performance.now();
+      try {
+        await createVariantSet(buffer, uploadDir, baseName);
+        const variantDuration = performance.now() - variantStartTime;
+        await serverLogger.info("API_UPLOAD", "Variant generation completed", {
+          uploadedPath,
+          duration: Math.round(variantDuration),
+          widths: RESPONSIVE_WIDTHS,
+          formats: ["webp", "jpg"],
+        });
+      } catch (variantError) {
+        const variantDuration = performance.now() - variantStartTime;
+        await serverLogger.error("API_UPLOAD", "Variant generation failed", variantError, {
+          uploadedPath,
+          duration: Math.round(variantDuration),
+        });
+      }
+    })();
+
+    return;
   } catch (error) {
-    console.error(error);
+    const uploadDuration = performance.now() - uploadStartTime;
+    await serverLogger.error("API_UPLOAD", "Upload failed", error, { duration: Math.round(uploadDuration) });
     return res.status(500).json({ message: "Failed to save image." });
   }
 }

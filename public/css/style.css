@@ -2168,9 +2168,13 @@ figure {
   box-shadow: 0 8px 18px rgba(94, 142, 209, 0.18);
 }
 .col-day-big {
+  font-family: "Playfair Display", "Times New Roman", serif;
   font-size: 140px;
   line-height: 0.9;
-  font-weight: 700;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+  letter-spacing: 0.02em;
   color: #392b31;
   text-shadow: 0 8px 20px rgba(182, 95, 121, 0.08);
 }

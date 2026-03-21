@@ -356,8 +356,10 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
             <div className="luxe-event-card animate-box">
               <div className="luxe-event-date-block">
                 {(() => {
-                  // Use first weddingEvent if available for richer info
-                  const primary = data.weddingEvents && data.weddingEvents.length > 0 ? data.weddingEvents[0] : undefined;
+                  // Prioritize CEREMONY event, otherwise use the first event
+                  const primary = data.weddingEvents && data.weddingEvents.length > 0 
+                    ? data.weddingEvents.find(e => e.type === 'CEREMONY') || data.weddingEvents[0]
+                    : undefined;
                   const sourceDate = primary ? new Date(primary.dateTime) : new Date(data.weddingDate);
                   const day = String(sourceDate.getDate()).padStart(2, "0");
                   const month = String(sourceDate.getMonth() + 1).padStart(2, "0");
@@ -383,7 +385,7 @@ export default function WeddingTemplate({ data }: WeddingTemplateProps) {
 
                   return (
                     <>
-                      <span className="luxe-event-title">Lễ Thành Hôn</span>
+                      <span className="luxe-event-title">{primary?.title || 'Lễ Thành Hôn'}</span>
 
                       {/* Time sentence moved above the 3-column date as requested */}
                       <p className="luxe-event-time">{timeSentence}</p>
